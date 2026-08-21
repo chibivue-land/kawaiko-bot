@@ -59,6 +59,12 @@ ubugeeei の過去の発言をもとにした人格 **kawaiko** が chibivue lan
 pnpm install
 ```
 
+`vp` が未インストールなら:
+
+```bash
+curl -fsSL https://vite.plus | bash
+```
+
 [wrangler.jsonc](wrangler.jsonc) の `vars` を確認・変更:
 
 - `DISCORD_APPLICATION_ID` ← 手順 1-2 の値に書き換える
@@ -77,11 +83,11 @@ pnpm exec wrangler secret put GEMINI_API_KEY
 デプロイとアイコン同期:
 
 ```bash
-pnpm exec vp run deploy
+vp run deploy
 ```
 
 ```bash
-DISCORD_BOT_TOKEN=... pnpm exec vp run sync-avatar
+DISCORD_BOT_TOKEN=... vp run sync-avatar
 ```
 
 デプロイ後 5 分以内に watchdog cron が Gateway に接続し、bot がオンラインになる。
@@ -106,15 +112,15 @@ CI 運用なら手順 3 の手動 `wrangler secret put` は不要 (ローカル�
 ## 開発
 
 ```bash
-pnpm exec vp dev
+vp dev
 ```
 
 ```bash
-pnpm exec vp test
+vp test
 ```
 
 ```bash
-pnpm exec vp check
+vp check
 ```
 
 ローカルでシークレットが要る場合は `.dev.vars.example` を `.dev.vars` にコピーして埋める。

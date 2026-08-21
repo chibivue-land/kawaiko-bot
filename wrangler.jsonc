@@ -8,14 +8,14 @@
   "observability": {
     "enabled": true,
   },
-  // Crons (UTC):
-  // - "*/5"  : watchdog that keeps the Discord Gateway WebSocket (DO) alive
-  // - "0 */2": uninvited reply to a random recent message (~every 2h x REPLY_PROBABILITY)
-  // - the rest: mutter slots at scattered JST times
-  //   0:45 UTC = 9:45 JST / 4:20 UTC = 13:20 JST / 9:05 UTC = 18:05 JST / 13:50 UTC = 22:50 JST
-  //   each fires with POST_PROBABILITY, so posts average ~3/day and feel irregular
+  // Workers Free allows only 5 cron triggers per account, so scheduling logic
+  // lives in src/schedule.ts and only two crons exist:
+  // - "*/5"   : watchdog that keeps the Discord Gateway WebSocket (DO) alive
+  // - "7 * *" : hourly dispatcher -> mutter on designated JST hours (~3/day
+  //             after POST_PROBABILITY), uninvited random reply every other
+  //             hour (x REPLY_PROBABILITY)
   "triggers": {
-    "crons": ["*/5 * * * *", "0 */2 * * *", "45 0 * * *", "20 4 * * *", "5 9 * * *", "50 13 * * *"],
+    "crons": ["*/5 * * * *", "7 * * * *"],
   },
   "vars": {
     // Cheap, capable, and browses via Google Search grounding.

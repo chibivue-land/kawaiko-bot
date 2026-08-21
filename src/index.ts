@@ -1,14 +1,13 @@
 import type { Env } from "./env";
 import { postScheduledMutter } from "./mutter";
 import { postRandomReply } from "./replier";
+import { dispatchForHour, jstHour } from "./schedule";
 
 export { UserRateLimiter, BudgetTracker } from "./do";
 export { DiscordGateway } from "./gateway";
 
 /** Cron used purely as the gateway-connection watchdog. */
 const WATCHDOG_CRON = "*/5 * * * *";
-/** Cron for uninvited replies to random recent messages. */
-const REPLY_CRON = "0 */2 * * *";
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
@@ -24,11 +23,16 @@ export default {
   async scheduled(controller, env, ctx): Promise<void> {
     // Every tick doubles as a watchdog for the gateway WebSocket.
     ctx.waitUntil(ensureGateway(env));
+    if (controller.cron === WATCHDOG_CRON) return;
 
-    if (controller.cron === REPLY_CRON) {
-      ctx.waitUntil(postRandomReply(env));
-    } else if (controller.cron !== WATCHDOG_CRON) {
-      ctx.waitUntil(postScheduledMutter(env));
+    // Hourly dispatcher: route by JST hour (see src/schedule.ts).
+    switch (dispatchForHour(jstHour())) {
+      case "mutter":
+        ctx.waitUntil(postScheduledMutter(env));
+        break;
+      case "reply":
+        ctx.waitUntil(postRandomReply(env));
+        break;
     }
   },
 } satisfies ExportedHandler<Env>;

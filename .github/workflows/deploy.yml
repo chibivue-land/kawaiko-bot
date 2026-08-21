@@ -24,11 +24,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Put vp on PATH
+        run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
       - name: Test
-        run: pnpm exec vp test
+        run: vp test
 
       - name: Deploy Worker (build + wrangler deploy via Vite Task)
-        run: pnpm exec vp run deploy
+        run: vp run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -40,7 +43,7 @@ jobs:
             --arg discord "$DISCORD_BOT_TOKEN" \
             --arg gemini "$GEMINI_API_KEY" \
             '{DISCORD_BOT_TOKEN: $discord, GEMINI_API_KEY: $gemini}' \
-            | pnpm exec wrangler secret bulk
+            | wrangler secret bulk
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

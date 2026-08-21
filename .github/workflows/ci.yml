@@ -21,11 +21,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Put vp on PATH
+        run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
       - name: Lint / format / typecheck
-        run: pnpm exec vp check
+        run: vp check
 
       - name: Test
-        run: pnpm exec vp test
+        run: vp test
 
       - name: Build
-        run: pnpm exec vp build
+        run: vp build
