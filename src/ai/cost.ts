@@ -22,6 +22,10 @@ interface ModelRate {
 
 // List prices per 1M tokens. Longest-prefix match wins.
 const RATES: Array<[prefix: string, rate: ModelRate]> = [
+  // Workers AI is billed in neurons with a free daily allocation; these token
+  // rates are the paid-tier equivalents, kept as a conservative estimate.
+  ["@cf/zai-org/glm-4.7-flash", { input: 0.06, output: 0.4 }],
+  ["@cf/", { input: 0.3, output: 2.5 }],
   ["gemini-3.7-flash", { input: 0.75, output: 3.75 }],
   ["gemini-3.5-flash-lite", { input: 0.1, output: 0.4 }],
   ["gemini-3.5-flash", { input: 1.5, output: 9 }],

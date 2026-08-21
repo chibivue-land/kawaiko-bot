@@ -18,10 +18,10 @@
     "crons": ["*/5 * * * *", "7 * * * *"],
   },
   "vars": {
-    // Comma-separated model preference list. Models rejecting with quota or
-    // availability errors (e.g. not covered by the free tier) fall back to the
-    // next entry automatically.
-    "KAWAIKO_MODEL": "gemini-3.7-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite",
+    // Comma-separated model preference list. "@cf/..." entries run on Workers
+    // AI (no API key, free daily allocation); "gemini-..." entries use the
+    // Gemini API. Quota/availability errors fall through to the next entry.
+    "KAWAIKO_MODEL": "@cf/zai-org/glm-4.7-flash,@cf/meta/llama-3.3-70b-instruct-fp8-fast,gemini-3.5-flash-lite",
     // Probability that a mutter cron slot actually posts (0.0-1.0).
     "POST_PROBABILITY": "0.75",
     // Probability that a reply cron slot actually replies (0.0-1.0).
@@ -37,6 +37,9 @@
     // kawaiko's home: the channel it mutters into and randomly replies in.
     // Mentions/DMs work in any channel the bot can read.
     "KAWAIKO_CHANNEL_ID": "1540327628035194911",
+  },
+  "ai": {
+    "binding": "AI",
   },
   "durable_objects": {
     "bindings": [

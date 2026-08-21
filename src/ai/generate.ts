@@ -18,14 +18,18 @@ export interface GenerateResult {
   costUsd: number;
 }
 
+// Workers AI first (no API key, free daily allocation on the Cloudflare
+// account itself); Gemini entries kick in only if a key with quota exists.
 const DEFAULT_MODELS =
-  "gemini-3.7-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite";
+  "@cf/zai-org/glm-4.7-flash,@cf/meta/llama-3.3-70b-instruct-fp8-fast,gemini-3.5-flash-lite";
 
 /** Errors worth falling back to the next model for (quota / availability). */
 function isFallbackError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const text = `${err.name} ${err.message}`;
-  return /\b(429|404|403|RESOURCE_EXHAUSTED|NOT_FOUND|PERMISSION_DENIED|quota)\b/i.test(text);
+  return /\b(429|404|403|RESOURCE_EXHAUSTED|NOT_FOUND|PERMISSION_DENIED|quota|no such model|capacity)\b/i.test(
+    text,
+  );
 }
 
 /**
@@ -45,7 +49,9 @@ export async function generate(env: Env, options: GenerateOptions): Promise<Gene
   let lastError: unknown;
   for (const model of models) {
     try {
-      return await generateWith(client, model, options);
+      return model.startsWith("@cf/")
+        ? await generateWithWorkersAi(env, model, options)
+        : await generateWithGemini(client, model, options);
     } catch (err) {
       lastError = err;
       if (isFallbackError(err)) {
@@ -58,7 +64,40 @@ export async function generate(env: Env, options: GenerateOptions): Promise<Gene
   throw lastError;
 }
 
-async function generateWith(
+/** Workers AI chat models (OpenAI-compatible response; older ones use `response`). */
+async function generateWithWorkersAi(
+  env: Env,
+  model: string,
+  options: GenerateOptions,
+): Promise<GenerateResult> {
+  interface ChatResult {
+    response?: string;
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  }
+  // env.AI.run is typed against the built-in model catalog; widen for arbitrary ids.
+  const run = env.AI.run.bind(env.AI) as (
+    model: string,
+    inputs: Record<string, unknown>,
+  ) => Promise<ChatResult>;
+
+  const res = await run(model, {
+    messages: [
+      { role: "system", content: options.system },
+      { role: "user", content: options.prompt },
+    ],
+    max_completion_tokens: options.maxTokens ?? 2048,
+  });
+
+  const costUsd = estimateCostUsd(model, {
+    total_input_tokens: res.usage?.prompt_tokens ?? 0,
+    total_output_tokens: res.usage?.completion_tokens ?? 0,
+  });
+  const text = (res.choices?.[0]?.message?.content ?? res.response ?? "").trim();
+  return { text: text || pickLine(EMPTY_RESPONSE_LINES), costUsd };
+}
+
+async function generateWithGemini(
   client: GoogleGenAI,
   model: string,
   options: GenerateOptions,

@@ -18,6 +18,7 @@ export interface Env {
   TRIGGER_TOKEN: string;
 
   // bindings
+  AI: Ai;
   USER_RATE_LIMITER: DurableObjectNamespace<UserRateLimiter>;
   BUDGET_TRACKER: DurableObjectNamespace<BudgetTracker>;
   DISCORD_GATEWAY: DurableObjectNamespace<DiscordGateway>;

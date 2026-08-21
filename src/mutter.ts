@@ -16,7 +16,7 @@ export const TOPIC_SEEDS: readonly string[] = [
   "深夜テンションの独り言。世界と自分のコードへの信頼が両方ゆらいでいる",
   "「型パズルで一日が溶けた」系の、誰も救われない技術あるある",
   "エンジニアの承認欲求とインターネットの相性の悪さを他人事のように語る (自分のことである)",
-  "web_search で直近のフロントエンド関連ニュースを 1 つ拾い、捻くれた一言感想をつける",
+  "ニュース: 下に貼られる直近のフロントエンド関連ニュースの見出しから 1 つ選び、捻くれた一言感想をつける",
   "chibivue 的な「小さく作る」話を布教しかけて、面倒になってやめる",
   "眠気・レッドブル・進捗のなさ、を過剰に低いテンションで報告する (コーヒーは嫌い)",
   "Rust に書き直せば解決する (解決しない) 系のネタ",
@@ -33,6 +33,33 @@ const MUTTER_STYLE = `トーンの指定:
 - シャバい (ぬるい・優等生的な) まとめ方をしない。説教・教訓・前向きな締めは禁止。
 - オチは自虐・諦観・虚無のどれか。ハッシュタグ禁止。絵文字は使っても 1 個まで。
 - ただし実在の個人・特定の企業やプロジェクトを名指しで攻撃しない。刺すのは概念と自分だけ。`;
+
+/** RSS feeds used for the news seed (no API key required). */
+const NEWS_FEEDS = [
+  "https://hnrss.org/newest?q=javascript+OR+typescript+OR+vue+OR+react",
+  "https://zenn.dev/feed",
+];
+
+/** Best-effort headline scrape; returns [] on any failure. */
+export async function fetchNewsHeadlines(limit = 8): Promise<string[]> {
+  const titles: string[] = [];
+  for (const feed of NEWS_FEEDS) {
+    try {
+      const res = await fetch(feed, { signal: AbortSignal.timeout(4000) });
+      if (!res.ok) continue;
+      const xml = await res.text();
+      const matches = [...xml.matchAll(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/gs)];
+      // The first <title> of a feed is the feed's own name.
+      for (const m of matches.slice(1)) {
+        const t = m[1]!.trim();
+        if (t && !titles.includes(t)) titles.push(t);
+      }
+    } catch {
+      // Feed down or slow; news is optional anyway.
+    }
+  }
+  return titles.slice(0, limit);
+}
 
 export function pickTopicSeed(random: () => number = Math.random): string {
   return TOPIC_SEEDS[Math.floor(random() * TOPIC_SEEDS.length)]!;
@@ -59,17 +86,22 @@ export async function postScheduledMutter(env: Env, opts?: { force?: boolean }):
   }
 
   const seed = pickTopicSeed();
+  const headlines = seed.startsWith("ニュース") ? await fetchNewsHeadlines() : [];
+  const newsBlock =
+    headlines.length > 0
+      ? `\n直近のニュース見出し:\n${headlines.map((h) => `- ${h}`).join("\n")}\n`
+      : "";
   const { text, costUsd } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
     generate(env, {
       system: buildSystemPrompt(),
       prompt: `今は ${jstNowLabel()}。Discord の雑談チャンネルに、誰に宛てるでもなくテキトーに一言呟いて。
 
 ネタの方向性: ${seed}
-
+${newsBlock}
 ${MUTTER_STYLE}
 
 毎回同じような書き出しにしない。短くてよい (1〜3 文)。`,
-      maxSearches: seed.includes("web_search") ? 2 : 0,
+      maxSearches: 0,
       effort: "low",
       maxTokens: 2048,
     }),
