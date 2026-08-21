@@ -259,6 +259,16 @@ export class DiscordGateway extends DurableObject<Env> {
         msg.member?.nick ?? msg.author.global_name ?? msg.author.username ?? "誰か";
       const question = stripBotMention(appId, content);
       const { text, costUsd, model } = await withTyping(this.env, msg.channel_id, async () => {
+        // Recent channel history (kawaiko's own lines included) = conversation memory.
+        const transcript = await fetchRecentMessages(this.env, msg.channel_id, 15)
+          .then((m) => buildTranscript(m, { botId: appId, excludeId: msg.id, limit: 12 }))
+          .catch(() => "");
+        const transcriptBlock = transcript
+          ? `
+
+チャンネルの直近の会話ログ (古い順。kawaiko の発言も含む):
+${transcript}`
+          : "";
         // Question-like mentions get a quick DDG + Wikipedia lookup for grounding.
         const research =
           question && needsResearch(question) ? await gatherResearch(question).catch(() => "") : "";
@@ -270,13 +280,15 @@ ${research}`
           : "";
         return generate(this.env, {
           system: buildSystemPrompt(),
-          prompt: `今は ${jstNowLabel()}。Discord で ${displayName} さんからメンションでこう話しかけられた:
+          prompt: `今は ${jstNowLabel()}。${transcriptBlock}
+
+この流れで、${displayName} さんが kawaiko に言った:
 
 ${question || "(本文なし、メンションだけ)"}${researchBlock}
 
-kawaiko として返事して。問いかけには具体的に答える。知らないことを適当に断言しない。`,
+会話の流れを踏まえて kawaiko として返事して。ログの中で進行中の遊びやお題 (しりとり・大喜利・クイズなど) があるなら、ルールを理解してちゃんと乗る。分からないふりをしない。直前の自分の発言と矛盾しない。同じことを繰り返さない。問いかけには具体的に答える。知らないことは適当に断言しない。自分の名前は必ず「kawaiko」と表記する。`,
           maxSearches: 0,
-          effort: "low",
+          effort: "medium",
           maxTokens: 1024,
         });
       });

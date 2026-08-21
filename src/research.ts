@@ -73,8 +73,22 @@ async function searchWikipedia(query: string): Promise<ResearchItem[]> {
   }
 }
 
+/**
+ * Refine "do you know X?" style questions into a searchable term:
+ * the raw question ("からころのこと知ってる？") is a terrible search query,
+ * the bare subject ("からころ") is a decent one.
+ */
+export function extractSearchQuery(question: string): string {
+  const m = question.match(
+    /^(.+?)(?:さん|氏|くん|ちゃん)?(?:のこと|のことを|って|とは)?(?:知って(?:る|ますか|います)?|しってる|誰|だれ|何者)/,
+  );
+  const subject = m?.[1]?.replace(/[はがのをも]\s*$/, "").trim();
+  return subject && subject.length >= 2 ? subject : question;
+}
+
 /** Gather a compact research block for the prompt; "" when nothing useful. */
-export async function gatherResearch(query: string): Promise<string> {
+export async function gatherResearch(rawQuery: string): Promise<string> {
+  const query = extractSearchQuery(rawQuery);
   const [ddg, wiki] = await Promise.all([searchDuckDuckGo(query), searchWikipedia(query)]);
   const items = [...ddg, ...wiki].slice(0, 6);
   if (items.length === 0) return "";

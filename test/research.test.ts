@@ -21,3 +21,13 @@ describe("stripHtml", () => {
     expect(stripHtml("a\n  b\t c")).toBe("a b c");
   });
 });
+
+describe("extractSearchQuery", () => {
+  it("extracts the subject from do-you-know questions", async () => {
+    const { extractSearchQuery } = await import("../src/research");
+    expect(extractSearchQuery("からころのこと知ってる？")).toBe("からころ");
+    expect(extractSearchQuery("sosukesuzuki はしってる？")).toBe("sosukesuzuki");
+    expect(extractSearchQuery("yamanokuさんのこと知ってる？")).toBe("yamanoku");
+    expect(extractSearchQuery("Vapor Mode って何？")).toBe("Vapor Mode って何？");
+  });
+});
