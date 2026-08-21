@@ -48,6 +48,8 @@ interface GatewayStatus {
   botUser?: { id: string; username: string };
   guildCount?: number;
   lastClose?: { code: number; reason: string; at: string };
+  /** Outcome of the most recent mention handling, for debugging. */
+  lastMention?: { at: string; ok: boolean; error?: string };
 }
 
 interface MessageCreate {
@@ -223,6 +225,8 @@ export class DiscordGateway extends DurableObject<Env> {
     if (!msg.guild_id || !isExplicitMention(appId, content, msg.mentions)) return;
 
     const reply = (text: string) => postChannelMessage(this.env, msg.channel_id, text, msg.id);
+    const outcome = (ok: boolean, error?: string) =>
+      this.recordStatus({ lastMention: { at: new Date().toISOString(), ok, error } });
 
     try {
       // Same per-user limits as the slash command.
@@ -262,8 +266,10 @@ kawaiko として返事して。最新情報が必要そうなら web_search を
       );
       await budget.recordSpend(costUsd);
       await reply(text);
+      await outcome(true);
     } catch (err) {
       console.error("gateway: mention reply failed:", err);
+      await outcome(false, err instanceof Error ? `${err.name}: ${err.message}` : String(err));
       try {
         await reply(pickLine(ERROR_LINES));
       } catch {

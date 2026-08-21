@@ -19,7 +19,15 @@ export default {
     }
     if (request.method === "GET" && url.pathname === "/status") {
       const gateway = env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global"));
-      const status = await gateway.status();
+      const status = {
+        ...(await gateway.status()),
+        // Presence booleans only — never the values.
+        secrets: {
+          DISCORD_BOT_TOKEN: Boolean(env.DISCORD_BOT_TOKEN),
+          GEMINI_API_KEY: Boolean(env.GEMINI_API_KEY),
+          TRIGGER_TOKEN: Boolean(env.TRIGGER_TOKEN),
+        },
+      };
       ctx.waitUntil(ensureGateway(env));
       return new Response(JSON.stringify(status, null, 2), {
         headers: { "Content-Type": "application/json" },
