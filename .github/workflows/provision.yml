@@ -1,0 +1,46 @@
+# アカウント側リソース (D1 など) を作る手動ジョブ。
+# Cloudflare の資格情報は GitHub Secrets にしか無いので、作成もここから回す。
+# 返ってきた ID は wrangler.jsonc に書いてコミットする (README の IaC 方針)。
+name: Provision
+
+on:
+  workflow_dispatch:
+    inputs:
+      d1_name:
+        description: "作成する D1 データベース名"
+        required: true
+        default: kawaiko-bot
+
+concurrency:
+  group: provision
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Put vp on PATH
+        run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
+      # 既にある場合は失敗するので握りつぶす (このジョブは何度流しても安全)。
+      - name: Create D1 database
+        run: wrangler d1 create "${{ inputs.d1_name }}" || echo "already exists (or create failed; see the list below)"
+
+      # database_id はここから拾って wrangler.jsonc に転記する。
+      - name: List D1 databases
+        run: wrangler d1 list --json
