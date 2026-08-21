@@ -39,6 +39,16 @@ export default {
         headers: { "Content-Type": "application/json" },
       });
     }
+    // Debug: inspect what the research pipeline returns for a query.
+    if (request.method === "GET" && url.pathname === "/research") {
+      const q = url.searchParams.get("q") ?? "";
+      if (!q) return new Response("missing q", { status: 400 });
+      const { gatherResearch } = await import("./research");
+      const block = await gatherResearch(q);
+      return new Response(block || "(no results)", {
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
     // Manual triggers (GitHub Actions "Mutter" workflow). Bypasses the
     // probability gate; the budget guard still applies.
     if (request.method === "POST" && url.pathname.startsWith("/trigger/")) {

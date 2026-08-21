@@ -1,12 +1,13 @@
 /**
  * Lightweight, key-free research for question-like mentions.
- * Workers AI models cannot browse, so we fetch context ourselves:
- * DuckDuckGo's HTML endpoint plus the Japanese Wikipedia search API.
+ * Workers AI models cannot browse, so we gather context ourselves from
+ * sources that reliably answer to datacenter IPs without API keys:
+ * Japanese Wikipedia, Google News RSS (ja), the GitHub API, and HN Algolia.
  * Everything is best-effort — failures degrade to an unassisted answer.
  */
 
 const FETCH_TIMEOUT_MS = 4000;
-const UA = "Mozilla/5.0 (compatible; kawaiko-bot/1.0)";
+const UA = "kawaiko-bot/1.0 (+https://github.com/chibivue-land/kawaiko-bot)";
 
 export interface ResearchItem {
   title: string;
@@ -15,12 +16,12 @@ export interface ResearchItem {
 
 /** Heuristic: does this message look like a question / info request? */
 export function needsResearch(content: string): boolean {
-  return /[?？]|とは|教えて|どう(いう|やって|なる|思)|何(が|を|で|の)|なに|最新|リリース|いつ|どこ|誰|だれ|調べ|比較|おすすめ/.test(
+  return /[?？]|とは|教えて|どう(いう|やって|なる|思)|何(が|を|で|の)|なに|最新|最近|リリース|バージョン|いつ|どこ|誰|だれ|何者|調べ|比較|おすすめ|どんな/.test(
     content,
   );
 }
 
-/** Crude HTML-to-text: strip tags and decode the common entities. */
+/** Crude HTML/XML-to-text: strip tags and decode the common entities. */
 export function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, "")
@@ -31,46 +32,6 @@ export function stripHtml(html: string): string {
     .replace(/&#x?\d+;/g, "")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-async function searchDuckDuckGo(query: string): Promise<ResearchItem[]> {
-  try {
-    const res = await fetch(
-      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=jp-jp`,
-      { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
-    );
-    if (!res.ok) return [];
-    const html = await res.text();
-    const items: ResearchItem[] = [];
-    const re =
-      /class="result__a"[^>]*>([\s\S]*?)<\/a>[\s\S]*?class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
-    for (const m of html.matchAll(re)) {
-      items.push({ title: stripHtml(m[1]!), snippet: stripHtml(m[2]!).slice(0, 200) });
-      if (items.length >= 4) break;
-    }
-    return items;
-  } catch {
-    return [];
-  }
-}
-
-async function searchWikipedia(query: string): Promise<ResearchItem[]> {
-  try {
-    const res = await fetch(
-      `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=3&utf8=1`,
-      { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
-    );
-    if (!res.ok) return [];
-    const data = (await res.json()) as {
-      query?: { search?: Array<{ title: string; snippet: string }> };
-    };
-    return (data.query?.search ?? []).map((s) => ({
-      title: `Wikipedia: ${s.title}`,
-      snippet: stripHtml(s.snippet).slice(0, 200),
-    }));
-  } catch {
-    return [];
-  }
 }
 
 /**
@@ -86,11 +47,106 @@ export function extractSearchQuery(question: string): string {
   return subject && subject.length >= 2 ? subject : question;
 }
 
+async function fetchWithTimeout(url: string): Promise<Response | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    return res.ok ? res : null;
+  } catch {
+    return null;
+  }
+}
+
+async function searchWikipedia(query: string): Promise<ResearchItem[]> {
+  const res = await fetchWithTimeout(
+    `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=2&utf8=1`,
+  );
+  if (!res) return [];
+  try {
+    const data = (await res.json()) as {
+      query?: { search?: Array<{ title: string; snippet: string }> };
+    };
+    return (data.query?.search ?? []).map((s) => ({
+      title: `Wikipedia: ${s.title}`,
+      snippet: stripHtml(s.snippet).slice(0, 180),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Google News RSS answers reliably from Workers and covers Japanese news. */
+async function searchGoogleNews(query: string): Promise<ResearchItem[]> {
+  const res = await fetchWithTimeout(
+    `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ja&gl=JP&ceid=JP:ja`,
+  );
+  if (!res) return [];
+  const xml = await res.text();
+  const items: ResearchItem[] = [];
+  // Skip the first <title> (the feed's own name).
+  for (const m of [...xml.matchAll(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/gs)].slice(
+    1,
+    4,
+  )) {
+    const t = stripHtml(m[1]!);
+    if (t) items.push({ title: `News: ${t}`, snippet: "" });
+  }
+  return items;
+}
+
+/** GitHub user lookup for handle-like queries (this is a dev community, after all). */
+async function searchGitHubUser(query: string): Promise<ResearchItem[]> {
+  if (!/^[a-zA-Z0-9-]{2,39}$/.test(query)) return [];
+  const res = await fetchWithTimeout(`https://api.github.com/users/${encodeURIComponent(query)}`);
+  if (!res) return [];
+  try {
+    const u = (await res.json()) as {
+      login?: string;
+      name?: string | null;
+      bio?: string | null;
+      followers?: number;
+      public_repos?: number;
+    };
+    if (!u.login) return [];
+    const bits = [
+      u.name && u.name !== u.login ? `name: ${u.name}` : "",
+      u.bio ? `bio: ${u.bio}` : "",
+      `repos: ${u.public_repos}, followers: ${u.followers}`,
+    ].filter(Boolean);
+    return [{ title: `GitHub: ${u.login}`, snippet: bits.join(" / ").slice(0, 220) }];
+  } catch {
+    return [];
+  }
+}
+
+/** HN Algolia for English tech topics. */
+async function searchHackerNews(query: string): Promise<ResearchItem[]> {
+  const res = await fetchWithTimeout(
+    `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&hitsPerPage=3&tags=story`,
+  );
+  if (!res) return [];
+  try {
+    const data = (await res.json()) as { hits?: Array<{ title?: string; points?: number }> };
+    return (data.hits ?? [])
+      .filter((h) => h.title)
+      .map((h) => ({ title: `HN: ${h.title!}`, snippet: `${h.points ?? 0} points` }));
+  } catch {
+    return [];
+  }
+}
+
 /** Gather a compact research block for the prompt; "" when nothing useful. */
 export async function gatherResearch(rawQuery: string): Promise<string> {
   const query = extractSearchQuery(rawQuery);
-  const [ddg, wiki] = await Promise.all([searchDuckDuckGo(query), searchWikipedia(query)]);
-  const items = [...ddg, ...wiki].slice(0, 6);
+  const results = await Promise.all([
+    searchWikipedia(query),
+    searchGoogleNews(query),
+    searchGitHubUser(query),
+    searchHackerNews(query),
+  ]);
+  const items = results.flat().slice(0, 8);
   if (items.length === 0) return "";
-  return items.map((i) => `- ${i.title}: ${i.snippet}`).join("\n");
+  return items.map((i) => (i.snippet ? `- ${i.title}: ${i.snippet}` : `- ${i.title}`)).join("\n");
 }
