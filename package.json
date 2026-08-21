@@ -1,0 +1,30 @@
+{
+  "name": "kawaiko-bot",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^2.18.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.53.1",
+    "@cloudflare/workers-types": "^5.20260821.1",
+    "typescript": "^5.9.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9",
+    "vite-plus": "^0.2.9",
+    "vitest": "4.1.11",
+    "wrangler": "^4.125.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9"
+  },
+  "packageManager": "pnpm@10.34.4",
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:@voidzero-dev/vite-plus-core@0.2.9"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  }
+}

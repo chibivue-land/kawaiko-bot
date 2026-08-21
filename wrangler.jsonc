@@ -1,0 +1,56 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kawaiko-bot",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  // Some SDK dependencies import node:* modules; nodejs_compat provides them on Workers.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  // Crons (UTC):
+  // - "*/5"  : watchdog that keeps the Discord Gateway WebSocket (DO) alive
+  // - "0 */2": uninvited reply to a random recent message (~every 2h x REPLY_PROBABILITY)
+  // - the rest: mutter slots at scattered JST times
+  //   0:45 UTC = 9:45 JST / 4:20 UTC = 13:20 JST / 9:05 UTC = 18:05 JST / 13:50 UTC = 22:50 JST
+  //   each fires with POST_PROBABILITY, so posts average ~3/day and feel irregular
+  "triggers": {
+    "crons": ["*/5 * * * *", "0 */2 * * *", "45 0 * * *", "20 4 * * *", "5 9 * * *", "50 13 * * *"],
+  },
+  "vars": {
+    // Cheap, capable, and browses via Google Search grounding.
+    // Free tier (AI Studio key): 1,000 requests/day, grounding allowance included.
+    "KAWAIKO_MODEL": "gemini-3.7-flash",
+    // Probability that a mutter cron slot actually posts (0.0-1.0).
+    "POST_PROBABILITY": "0.75",
+    // Probability that a reply cron slot actually replies (0.0-1.0).
+    "REPLY_PROBABILITY": "0.7",
+    // Per-user limits for mention replies.
+    "RATE_LIMIT_PER_HOUR": "5",
+    "RATE_LIMIT_PER_DAY": "20",
+    // Soft monthly cost cap (USD) enforced in code via estimated usage.
+    // Also set a hard Workspace spend limit in the Anthropic Console (see README).
+    "MONTHLY_BUDGET_USD": "100",
+    // ---- Discord application ----
+    "DISCORD_APPLICATION_ID": "1540328713248440390",
+    // kawaiko's home: the channel it mutters into and randomly replies in.
+    // Mentions/DMs work in any channel the bot can read.
+    "KAWAIKO_CHANNEL_ID": "1540327628035194911",
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "USER_RATE_LIMITER", "class_name": "UserRateLimiter" },
+      { "name": "BUDGET_TRACKER", "class_name": "BudgetTracker" },
+      { "name": "DISCORD_GATEWAY", "class_name": "DiscordGateway" },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["UserRateLimiter", "BudgetTracker", "DiscordGateway"],
+    },
+  ],
+  // Secrets (register with `wrangler secret put`):
+  //   DISCORD_BOT_TOKEN
+  //   GEMINI_API_KEY
+}
