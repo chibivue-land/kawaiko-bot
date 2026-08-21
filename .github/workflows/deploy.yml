@@ -43,7 +43,8 @@ jobs:
             --arg discord "$DISCORD_BOT_TOKEN" \
             --arg gemini "$GEMINI_API_KEY" \
             --arg trigger "$TRIGGER_TOKEN" \
-            '{DISCORD_BOT_TOKEN: $discord, GEMINI_API_KEY: $gemini, TRIGGER_TOKEN: $trigger}' \
+            --arg ghtoken "$GITHUB_API_TOKEN" \
+            '{DISCORD_BOT_TOKEN: $discord, GEMINI_API_KEY: $gemini, TRIGGER_TOKEN: $trigger, GITHUB_API_TOKEN: $ghtoken}' \
             | wrangler secret bulk
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -51,3 +52,4 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}

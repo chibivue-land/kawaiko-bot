@@ -44,7 +44,7 @@ export default {
       const q = url.searchParams.get("q") ?? "";
       if (!q) return new Response("missing q", { status: 400 });
       const { gatherResearch } = await import("./research");
-      const block = await gatherResearch(q);
+      const block = await gatherResearch(q, { githubToken: env.GITHUB_API_TOKEN });
       return new Response(block || "(no results)", {
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       });

@@ -47,10 +47,13 @@ export function extractSearchQuery(question: string): string {
   return subject && subject.length >= 2 ? subject : question;
 }
 
-async function fetchWithTimeout(url: string): Promise<Response | null> {
+async function fetchWithTimeout(
+  url: string,
+  headers: Record<string, string> = {},
+): Promise<Response | null> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": UA },
+      headers: { "User-Agent": UA, ...headers },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     return res.ok ? res : null;
@@ -97,9 +100,12 @@ async function searchGoogleNews(query: string): Promise<ResearchItem[]> {
 }
 
 /** GitHub user lookup for handle-like queries (this is a dev community, after all). */
-async function searchGitHubUser(query: string): Promise<ResearchItem[]> {
+async function searchGitHubUser(query: string, token?: string): Promise<ResearchItem[]> {
   if (!/^[a-zA-Z0-9-]{2,39}$/.test(query)) return [];
-  const res = await fetchWithTimeout(`https://api.github.com/users/${encodeURIComponent(query)}`);
+  const res = await fetchWithTimeout(
+    `https://api.github.com/users/${encodeURIComponent(query)}`,
+    token ? { Authorization: `Bearer ${token}` } : {},
+  );
   if (!res) return [];
   try {
     const u = (await res.json()) as {
@@ -138,12 +144,15 @@ async function searchHackerNews(query: string): Promise<ResearchItem[]> {
 }
 
 /** Gather a compact research block for the prompt; "" when nothing useful. */
-export async function gatherResearch(rawQuery: string): Promise<string> {
+export async function gatherResearch(
+  rawQuery: string,
+  opts?: { githubToken?: string },
+): Promise<string> {
   const query = extractSearchQuery(rawQuery);
   const results = await Promise.all([
     searchWikipedia(query),
     searchGoogleNews(query),
-    searchGitHubUser(query),
+    searchGitHubUser(query, opts?.githubToken),
     searchHackerNews(query),
   ]);
   const items = results.flat().slice(0, 8);

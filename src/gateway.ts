@@ -271,7 +271,11 @@ ${transcript}`
           : "";
         // Question-like mentions get a quick DDG + Wikipedia lookup for grounding.
         const research =
-          question && needsResearch(question) ? await gatherResearch(question).catch(() => "") : "";
+          question && needsResearch(question)
+            ? await gatherResearch(question, { githubToken: this.env.GITHUB_API_TOKEN }).catch(
+                () => "",
+              )
+            : "";
         const researchBlock = research
           ? `
 

@@ -16,6 +16,8 @@ export interface Env {
   DISCORD_BOT_TOKEN: string;
   GEMINI_API_KEY: string;
   TRIGGER_TOKEN: string;
+  /** Optional no-scope PAT; unauthenticated GitHub API is dead from shared Workers IPs. */
+  GITHUB_API_TOKEN?: string;
 
   // bindings
   AI: Ai;
