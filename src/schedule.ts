@@ -8,13 +8,18 @@
 /** JST hours that get a mutter slot (~3/day after the probability gate). */
 export const MUTTER_HOURS_JST: readonly number[] = [9, 13, 18, 23];
 
-export type DispatchAction = "mutter" | "reply" | "none";
+export type DispatchAction = "mutter" | "reply" | "learn";
 
-/** Mutter on designated hours; barge into someone's message every other hour. */
+/**
+ * Mutter on designated hours, barge into someone's message every other hour,
+ * and spend the remaining hours folding what was said into memory. The learning
+ * pass costs nothing when the server was quiet — it needs a minimum number of
+ * unread messages before it calls a model at all (see src/learn.ts).
+ */
 export function dispatchForHour(jstHour: number): DispatchAction {
   if (MUTTER_HOURS_JST.includes(jstHour)) return "mutter";
   if (jstHour % 2 === 0) return "reply";
-  return "none";
+  return "learn";
 }
 
 /** Current hour (0-23) in JST. */

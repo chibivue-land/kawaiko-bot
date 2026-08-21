@@ -1,7 +1,16 @@
 import type { Env } from "./env";
+import { runLearningPass } from "./learn";
 import { postScheduledMutter } from "./mutter";
 import { postRandomReply } from "./replier";
 import { dispatchForHour, jstHour } from "./schedule";
+import {
+  knownGuilds,
+  learnCursor,
+  liveFacts,
+  recentBatches,
+  retractBatch,
+  rollbackTo,
+} from "./memory";
 
 export { UserRateLimiter, BudgetTracker, ChannelMemory } from "./do";
 export { DiscordGateway } from "./gateway";
@@ -49,17 +58,26 @@ export default {
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       });
     }
+    // Inspect and undo what kawaiko has learned about a server.
+    // Authenticated: this returns observations about real people.
+    if (url.pathname.startsWith("/memory")) {
+      if (!authorized(request, env)) return new Response("unauthorized", { status: 401 });
+      return handleMemory(request, env, url);
+    }
     // Manual triggers (GitHub Actions "Mutter" workflow). Bypasses the
     // probability gate; the budget guard still applies.
     if (request.method === "POST" && url.pathname.startsWith("/trigger/")) {
-      const auth = request.headers.get("Authorization");
-      if (!env.TRIGGER_TOKEN || auth !== `Bearer ${env.TRIGGER_TOKEN}`) {
-        return new Response("unauthorized", { status: 401 });
-      }
+      if (!authorized(request, env)) return new Response("unauthorized", { status: 401 });
       const kind = url.pathname.slice("/trigger/".length);
       const wait = url.searchParams.get("wait") === "1";
       const fn =
-        kind === "mutter" ? postScheduledMutter : kind === "reply" ? postRandomReply : null;
+        kind === "mutter"
+          ? postScheduledMutter
+          : kind === "reply"
+            ? postRandomReply
+            : kind === "learn"
+              ? runLearningPass
+              : null;
       if (!fn) return new Response("unknown trigger", { status: 400 });
       if (wait) {
         // Synchronous mode: surface the outcome in the response for debugging.
@@ -88,6 +106,9 @@ export default {
       case "reply":
         ctx.waitUntil(postRandomReply(env));
         break;
+      case "learn":
+        ctx.waitUntil(runLearningPass(env));
+        break;
     }
   },
 } satisfies ExportedHandler<Env>;
@@ -95,4 +116,51 @@ export default {
 async function ensureGateway(env: Env): Promise<void> {
   const gateway = env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global"));
   await gateway.ensure();
+}
+
+function authorized(request: Request, env: Env): boolean {
+  const auth = request.headers.get("Authorization");
+  return Boolean(env.TRIGGER_TOKEN) && auth === `Bearer ${env.TRIGGER_TOKEN}`;
+}
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+
+/**
+ * Memory admin surface. Undo is a single POST because the store is an
+ * append-only log — nothing is restored, a newer event just supersedes.
+ *
+ *   GET  /memory?guild=<id>                    what kawaiko believes + recent batches
+ *   POST /memory/retract-batch?guild=&batch=   undo one learning pass
+ *   POST /memory/rollback?guild=&seq=          restore knowledge to an offset
+ */
+async function handleMemory(request: Request, env: Env, url: URL): Promise<Response> {
+  if (!env.DB) return json({ error: "no D1 binding" }, 503);
+  const guildId = url.searchParams.get("guild");
+
+  if (request.method === "GET" && url.pathname === "/memory") {
+    if (!guildId) return json({ guilds: await knownGuilds(env) });
+    return json({
+      guild: guildId,
+      cursor: await learnCursor(env, guildId),
+      facts: await liveFacts(env, guildId, { limit: 200 }),
+      batches: await recentBatches(env, guildId),
+    });
+  }
+  if (request.method === "POST" && url.pathname === "/memory/retract-batch") {
+    const batch = url.searchParams.get("batch");
+    if (!guildId || !batch) return json({ error: "missing guild or batch" }, 400);
+    const ok = await retractBatch(env, guildId, batch, url.searchParams.get("note") ?? undefined);
+    return json({ ok, retracted: batch }, ok ? 200 : 500);
+  }
+  if (request.method === "POST" && url.pathname === "/memory/rollback") {
+    const seq = Number(url.searchParams.get("seq"));
+    if (!guildId || !Number.isFinite(seq)) return json({ error: "missing guild or seq" }, 400);
+    const ok = await rollbackTo(env, guildId, seq, url.searchParams.get("note") ?? undefined);
+    return json({ ok, restoredTo: seq }, ok ? 200 : 500);
+  }
+  return json({ error: "not found" }, 404);
 }

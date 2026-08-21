@@ -14,6 +14,7 @@ import {
   pickLine,
 } from "./lines";
 import { isResetCommand } from "./commands";
+import { buildMemoryBlock, hasMemory, liveFacts, recordObservations } from "./memory";
 import { AVOID_LIMIT, buildAvoidBlock } from "./repetition";
 
 /**
@@ -231,11 +232,46 @@ export class DiscordGateway extends DurableObject<Env> {
     });
   }
 
+  /**
+   * Append one message to the long-term observation log (src/memory.ts).
+   * Best-effort and never awaited for correctness: watching the server must
+   * never be able to break answering it.
+   */
+  private async observe(msg: MessageCreate, guildId: string, isSelf: boolean): Promise<void> {
+    if (this.env.OBSERVE_MESSAGES === "false" || !hasMemory(this.env)) return;
+    const content = (msg.content ?? "").trim();
+    if (!content || !msg.author) return;
+    const at = msg.timestamp ? Date.parse(msg.timestamp) : Number.NaN;
+    await recordObservations(this.env, [
+      {
+        guildId,
+        channelId: msg.channel_id,
+        messageId: msg.id,
+        authorId: msg.author.id,
+        authorLabel: msg.member?.nick ?? msg.author.global_name ?? msg.author.username ?? "誰か",
+        isKawaiko: isSelf,
+        content: content.slice(0, 2000),
+        at: Number.isFinite(at) ? at : Date.now(),
+      },
+    ]);
+  }
+
   private async onMessageCreate(msg: MessageCreate): Promise<void> {
     const appId = this.env.DISCORD_APPLICATION_ID;
     const content = msg.content ?? "";
-    if (!msg.author || msg.author.bot) return;
+    if (!msg.author) return;
     if (!msg.guild_id) return; // Guild messages only (no DMs).
+
+    // Observe before deciding whether to answer: kawaiko learns about the whole
+    // server, not just the messages aimed at it. Its own lines belong in the
+    // record too; every other bot is noise.
+    const guildId = msg.guild_id;
+    const authorId = msg.author.id;
+    const isSelf = authorId === appId;
+    if (msg.author.bot && !isSelf) return;
+    await this.observe(msg, guildId, isSelf);
+    if (isSelf) return;
+
     // React to explicit @mentions and to replies to kawaiko's own messages.
     const isReplyToBot = msg.referenced_message?.author?.id === appId;
     if (!isReplyToBot && !isExplicitMention(appId, content, msg.mentions)) return;
@@ -265,7 +301,7 @@ export class DiscordGateway extends DurableObject<Env> {
 
       // Same per-user limits as the slash command.
       const limiter = this.env.USER_RATE_LIMITER.get(
-        this.env.USER_RATE_LIMITER.idFromName(msg.author.id),
+        this.env.USER_RATE_LIMITER.idFromName(authorId),
       );
       const decision = await limiter.checkAndIncrement(
         Number(this.env.RATE_LIMIT_PER_HOUR) || 5,
@@ -299,6 +335,11 @@ export class DiscordGateway extends DurableObject<Env> {
         });
         // What kawaiko just said in this channel, so it stops echoing itself.
         const ownLines = collectOwnLines(recent, appId, AVOID_LIMIT);
+        // Long-term memory of this *server* — unaffected by the channel reset,
+        // with anything known about this speaker pulled to the front.
+        const memoryBlock = buildMemoryBlock(
+          await liveFacts(this.env, guildId, { subjectId: authorId }),
+        );
         const transcriptBlock = transcript
           ? `
 
@@ -326,7 +367,7 @@ ${research}`
 
 この流れで、${displayName} さんが kawaiko に言った:
 
-${question || "(本文なし、メンションだけ)"}${researchBlock}${buildAvoidBlock(ownLines)}
+${question || "(本文なし、メンションだけ)"}${researchBlock}${memoryBlock}${buildAvoidBlock(ownLines)}
 
 会話の流れを踏まえて kawaiko として返事して。ログの中で進行中の遊びやお題 (しりとり・大喜利・クイズなど) があるなら、ルールを理解してちゃんと乗る。分からないふりをしない。直前の自分の発言と矛盾しない。問いかけには具体的に答える。知らないことは適当に断言しない。自分の名前は必ず「kawaiko」と表記する。
 

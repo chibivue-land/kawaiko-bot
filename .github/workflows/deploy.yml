@@ -30,6 +30,19 @@ jobs:
       - name: Test
         run: vp test
 
+      # Skipped until the d1_databases binding is uncommented in wrangler.jsonc
+      # (commented lines cannot match the anchored pattern).
+      - name: Apply D1 migrations
+        run: |
+          if grep -qE '^[[:space:]]*"d1_databases"' wrangler.jsonc; then
+            wrangler d1 migrations apply kawaiko-bot --remote
+          else
+            echo "D1 binding not configured yet; skipping migrations"
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy Worker (build + wrangler deploy via Vite Task)
         run: vp run deploy
         env:

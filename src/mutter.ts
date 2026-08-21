@@ -1,9 +1,15 @@
 import type { Env } from "./env";
 import { generateVaried } from "./ai/generate";
-import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
+import {
+  fetchChannelGuildId,
+  fetchRecentMessages,
+  postChannelMessage,
+  withTyping,
+} from "./discord/api";
 import { collectOwnLines, sinceReset } from "./discord/transcript";
 import { buildSystemPrompt, jstNowLabel, pickReplyLength } from "./persona";
 import { AVOID_LIMIT, buildAvoidBlock } from "./repetition";
+import { buildMemoryBlock, liveFacts } from "./memory";
 
 /**
  * Topic seeds for the scheduled mutters. One is picked at random per post.
@@ -125,6 +131,8 @@ async function postMutter(
     await memory.resetAt(),
   );
   const ownLines = collectOwnLines(recent, env.DISCORD_APPLICATION_ID, AVOID_LIMIT);
+  const guildId = await fetchChannelGuildId(env, env.KAWAIKO_CHANNEL_ID);
+  const memoryBlock = guildId ? buildMemoryBlock(await liveFacts(env, guildId)) : "";
 
   const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
     generateVaried(
@@ -135,7 +143,7 @@ async function postMutter(
 
 ネタの方向性: ${seed}
 ${newsBlock}
-${MUTTER_STYLE}${buildAvoidBlock(ownLines)}
+${MUTTER_STYLE}${memoryBlock}${buildAvoidBlock(ownLines)}
 
 今回の長さ (毎回変える。直前の呟きと同じ分量にしない): ${pickReplyLength()}
 毎回同じような書き出しにしない。`,

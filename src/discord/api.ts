@@ -84,3 +84,17 @@ export async function withTyping<T>(env: Env, channelId: string, fn: () => Promi
     clearInterval(timer);
   }
 }
+
+/** The server a channel belongs to (mutter/reply only know their channel id). */
+export async function fetchChannelGuildId(
+  env: Env,
+  channelId: string,
+): Promise<string | undefined> {
+  try {
+    const res = await discordFetch(env, `/channels/${channelId}`, { method: "GET" });
+    return ((await res.json()) as { guild_id?: string }).guild_id;
+  } catch (err) {
+    console.warn("discord: failed to resolve the channel's guild:", String(err));
+    return undefined;
+  }
+}

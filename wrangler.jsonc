@@ -39,6 +39,10 @@
     // kawaiko's home: the channel it mutters into and randomly replies in.
     // Mentions/DMs work in any channel the bot can read.
     "KAWAIKO_CHANNEL_ID": "1540327628035194911",
+    // Write every guild message to the D1 observation log (src/memory.ts), which
+    // is what the hourly learning pass reads. Set to "false" to stop observing;
+    // kawaiko then keeps only what it has already learned.
+    "OBSERVE_MESSAGES": "true",
   },
   "ai": {
     "binding": "AI",
@@ -52,6 +56,22 @@
       { "name": "CHANNEL_MEMORY", "class_name": "ChannelMemory" },
     ],
   },
+  // ---- Long-term memory (D1) ----
+  // The database has to exist on the account first. The API token in
+  // CLOUDFLARE_API_TOKEN currently lacks D1 permissions, so create it by adding
+  // "D1: Edit" to that token and running the "Provision" workflow (or, locally,
+  // `wrangler d1 create kawaiko-bot`). Then paste database_id below and
+  // uncomment — deploy applies migrations/ automatically from there on.
+  // Until then every memory feature no-ops and the rest of the bot is unaffected.
+  //
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "kawaiko-bot",
+  //     "database_id": "<paste from `wrangler d1 create kawaiko-bot`>",
+  //     "migrations_dir": "migrations",
+  //   },
+  // ],
   "migrations": [
     {
       "tag": "v1",

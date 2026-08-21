@@ -14,9 +14,9 @@ describe("dispatchForHour", () => {
     expect(dispatchForHour(22)).toBe("reply");
   });
 
-  it("does nothing on odd non-mutter hours", () => {
-    expect(dispatchForHour(1)).toBe("none");
-    expect(dispatchForHour(21)).toBe("none");
+  it("learns on odd non-mutter hours", () => {
+    expect(dispatchForHour(1)).toBe("learn");
+    expect(dispatchForHour(21)).toBe("learn");
   });
 
   it("mutter hours win over the even-hour reply rule", () => {
@@ -28,6 +28,7 @@ describe("dispatchForHour", () => {
     const actions = [...Array(24).keys()].map(dispatchForHour);
     expect(actions.filter((a) => a === "mutter")).toHaveLength(4);
     expect(actions.filter((a) => a === "reply").length).toBeGreaterThanOrEqual(10);
+    expect(actions.filter((a) => a === "learn").length).toBeGreaterThanOrEqual(8);
   });
 });
 

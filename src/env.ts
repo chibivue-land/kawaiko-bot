@@ -11,6 +11,8 @@ export interface Env {
   MONTHLY_BUDGET_USD: string;
   DISCORD_APPLICATION_ID: string;
   KAWAIKO_CHANNEL_ID: string;
+  /** "false" turns off writing the observation log (see src/memory.ts). */
+  OBSERVE_MESSAGES?: string;
 
   // secrets (wrangler secret put)
   DISCORD_BOT_TOKEN: string;
@@ -26,4 +28,10 @@ export interface Env {
   DISCORD_GATEWAY: DurableObjectNamespace<DiscordGateway>;
   /** One instance per Discord channel; scopes "forget this channel" to that channel. */
   CHANNEL_MEMORY: DurableObjectNamespace<ChannelMemory>;
+  /**
+   * Long-term per-server memory (see src/memory.ts). Optional: until the D1
+   * database is provisioned and bound, kawaiko simply does not remember and
+   * everything else keeps working.
+   */
+  DB?: D1Database;
 }

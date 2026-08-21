@@ -1,9 +1,15 @@
 import type { Env } from "./env";
 import { generateVaried } from "./ai/generate";
-import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
+import {
+  fetchChannelGuildId,
+  fetchRecentMessages,
+  postChannelMessage,
+  withTyping,
+} from "./discord/api";
 import { buildTranscript, collectOwnLines, sinceReset } from "./discord/transcript";
 import { VARIETY_RULES, buildDeliveryBlock, buildSystemPrompt, jstNowLabel } from "./persona";
 import { AVOID_LIMIT, buildAvoidBlock } from "./repetition";
+import { buildMemoryBlock, liveFacts } from "./memory";
 import { shouldPost, type PostOutcome } from "./mutter";
 
 /** Only barge into messages newer than this. */
@@ -72,6 +78,11 @@ async function postReply(
   });
   // kawaiko's own recent lines: the list it must not echo.
   const ownLines = collectOwnLines(messages, appId, AVOID_LIMIT);
+  // Server-scoped long-term memory, biased toward the person being bothered.
+  const guildId = await fetchChannelGuildId(env, env.KAWAIKO_CHANNEL_ID);
+  const memoryBlock = guildId
+    ? buildMemoryBlock(await liveFacts(env, guildId, { subjectId: target.author.id }))
+    : "";
 
   const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
     generateVaried(
@@ -82,7 +93,7 @@ async function postReply(
 
 ${target.content}
 
-頼まれてもいないのに、この発言に突然リプライで絡んで。捻くれた辛口の茶々・ツッコミ・共感のどれか。相手を本気で傷つける個人攻撃はしない (からかいの範囲で)。${buildAvoidBlock(ownLines)}
+頼まれてもいないのに、この発言に突然リプライで絡んで。捻くれた辛口の茶々・ツッコミ・共感のどれか。相手を本気で傷つける個人攻撃はしない (からかいの範囲で)。${memoryBlock}${buildAvoidBlock(ownLines)}
 
 ${buildDeliveryBlock()}
 

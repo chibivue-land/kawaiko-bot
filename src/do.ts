@@ -48,6 +48,9 @@ export class UserRateLimiter extends DurableObject {
   }
 }
 
+/** The scheduled jobs whose last outcome /status reports. */
+export type OpKind = "mutter" | "reply" | "learn";
+
 export interface OpOutcome {
   at: string;
   ok: boolean;
@@ -62,12 +65,7 @@ export interface OpOutcome {
  * Also keeps the outcome of the latest mutter/reply for /status diagnostics.
  */
 export class BudgetTracker extends DurableObject {
-  async recordOutcome(
-    kind: "mutter" | "reply",
-    ok: boolean,
-    error?: string,
-    model?: string,
-  ): Promise<void> {
+  async recordOutcome(kind: OpKind, ok: boolean, error?: string, model?: string): Promise<void> {
     await this.ctx.storage.put(`last:${kind}`, {
       at: new Date().toISOString(),
       ok,
@@ -76,10 +74,11 @@ export class BudgetTracker extends DurableObject {
     } satisfies OpOutcome);
   }
 
-  async lastOutcomes(): Promise<{ mutter?: OpOutcome; reply?: OpOutcome }> {
+  async lastOutcomes(): Promise<Partial<Record<OpKind, OpOutcome>>> {
     return {
       mutter: await this.ctx.storage.get<OpOutcome>("last:mutter"),
       reply: await this.ctx.storage.get<OpOutcome>("last:reply"),
+      learn: await this.ctx.storage.get<OpOutcome>("last:learn"),
     };
   }
 
