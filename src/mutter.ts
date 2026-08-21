@@ -72,29 +72,37 @@ export function shouldPost(probability: string, random: () => number = Math.rand
 }
 
 /** Cron entry point: probability gate -> budget gate -> generate -> post. */
-export async function postScheduledMutter(env: Env, opts?: { force?: boolean }): Promise<void> {
+export interface PostOutcome {
+  ok: boolean;
+  skipped?: string;
+  error?: string;
+}
+
+export async function postScheduledMutter(
+  env: Env,
+  opts?: { force?: boolean },
+): Promise<PostOutcome> {
   if (!opts?.force && !shouldPost(env.POST_PROBABILITY)) {
     console.log("mutter: skipped by probability gate");
-    return;
+    return { ok: true, skipped: "probability" };
   }
 
   const budget = env.BUDGET_TRACKER.get(env.BUDGET_TRACKER.idFromName("global"));
   const { allowed, spentUsd } = await budget.checkBudget(Number(env.MONTHLY_BUDGET_USD) || 100);
   if (!allowed) {
     console.warn(`mutter: monthly budget exceeded (spent ~$${spentUsd.toFixed(2)}), skipping`);
-    return;
+    return { ok: true, skipped: "budget" };
   }
 
   try {
     await postMutter(env, budget);
     await budget.recordOutcome("mutter", true);
+    return { ok: true };
   } catch (err) {
     console.error("mutter failed:", err);
-    await budget.recordOutcome(
-      "mutter",
-      false,
-      err instanceof Error ? `${err.name}: ${err.message}` : String(err),
-    );
+    const error = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    await budget.recordOutcome("mutter", false, error);
+    return { ok: false, error };
   }
 }
 

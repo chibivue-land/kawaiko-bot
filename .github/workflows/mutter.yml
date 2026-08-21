@@ -19,8 +19,9 @@ jobs:
     steps:
       - name: Trigger kawaiko
         run: |
+          # wait=1 returns the outcome JSON so failures show up right here.
           curl -sf -X POST \
-            "https://kawaiko-bot.ubuge1122.workers.dev/trigger/${{ inputs.kind }}" \
+            "https://kawaiko-bot.ubuge1122.workers.dev/trigger/${{ inputs.kind }}?wait=1" \
             -H "Authorization: Bearer $TRIGGER_TOKEN"
         env:
           TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}

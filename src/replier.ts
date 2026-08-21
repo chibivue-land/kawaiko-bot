@@ -2,7 +2,7 @@ import type { Env } from "./env";
 import { generate } from "./ai/generate";
 import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
 import { buildSystemPrompt, jstNowLabel } from "./persona";
-import { shouldPost } from "./mutter";
+import { shouldPost, type PostOutcome } from "./mutter";
 
 /** Only barge into messages newer than this. */
 const MAX_MESSAGE_AGE_MS = 3 * 3_600_000;
@@ -11,29 +11,28 @@ const MAX_MESSAGE_AGE_MS = 3 * 3_600_000;
  * Every couple of hours, pick a random recent human message in the channel
  * and reply to it uninvited. Kawaiko hates humanity but cannot stop replying.
  */
-export async function postRandomReply(env: Env, opts?: { force?: boolean }): Promise<void> {
+export async function postRandomReply(env: Env, opts?: { force?: boolean }): Promise<PostOutcome> {
   if (!opts?.force && !shouldPost(env.REPLY_PROBABILITY)) {
     console.log("replier: skipped by probability gate");
-    return;
+    return { ok: true, skipped: "probability" };
   }
 
   const budget = env.BUDGET_TRACKER.get(env.BUDGET_TRACKER.idFromName("global"));
   const { allowed, spentUsd } = await budget.checkBudget(Number(env.MONTHLY_BUDGET_USD) || 100);
   if (!allowed) {
     console.warn(`replier: monthly budget exceeded (spent ~$${spentUsd.toFixed(2)}), skipping`);
-    return;
+    return { ok: true, skipped: "budget" };
   }
 
   try {
     await postReply(env, budget);
     await budget.recordOutcome("reply", true);
+    return { ok: true };
   } catch (err) {
     console.error("replier failed:", err);
-    await budget.recordOutcome(
-      "reply",
-      false,
-      err instanceof Error ? `${err.name}: ${err.message}` : String(err),
-    );
+    const error = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    await budget.recordOutcome("reply", false, error);
+    return { ok: false, error };
   }
 }
 

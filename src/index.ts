@@ -47,15 +47,20 @@ export default {
         return new Response("unauthorized", { status: 401 });
       }
       const kind = url.pathname.slice("/trigger/".length);
-      if (kind === "mutter") {
-        ctx.waitUntil(postScheduledMutter(env, { force: true }));
-        return new Response("mutter triggered\n", { status: 202 });
+      const wait = url.searchParams.get("wait") === "1";
+      const fn =
+        kind === "mutter" ? postScheduledMutter : kind === "reply" ? postRandomReply : null;
+      if (!fn) return new Response("unknown trigger", { status: 400 });
+      if (wait) {
+        // Synchronous mode: surface the outcome in the response for debugging.
+        const outcome = await fn(env, { force: true });
+        return new Response(JSON.stringify(outcome), {
+          status: outcome.ok ? 200 : 500,
+          headers: { "Content-Type": "application/json" },
+        });
       }
-      if (kind === "reply") {
-        ctx.waitUntil(postRandomReply(env, { force: true }));
-        return new Response("reply triggered\n", { status: 202 });
-      }
-      return new Response("unknown trigger", { status: 400 });
+      ctx.waitUntil(fn(env, { force: true }));
+      return new Response(`${kind} triggered\n`, { status: 202 });
     }
     return new Response("not found", { status: 404 });
   },
