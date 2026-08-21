@@ -24,6 +24,7 @@ export default {
       const { spentUsd } = await budget.checkBudget(budgetUsd);
       const status = {
         ...(await gateway.status()),
+        lastOutcomes: await budget.lastOutcomes(),
         // Estimated spend this month vs the soft cap (code-side guard).
         budget: { spentUsd: Number(spentUsd.toFixed(4)), budgetUsd },
         // Presence booleans only — never the values.

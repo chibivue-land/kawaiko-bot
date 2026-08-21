@@ -24,6 +24,23 @@ export async function postRandomReply(env: Env, opts?: { force?: boolean }): Pro
     return;
   }
 
+  try {
+    await postReply(env, budget);
+    await budget.recordOutcome("reply", true);
+  } catch (err) {
+    console.error("replier failed:", err);
+    await budget.recordOutcome(
+      "reply",
+      false,
+      err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+    );
+  }
+}
+
+async function postReply(
+  env: Env,
+  budget: ReturnType<Env["BUDGET_TRACKER"]["get"]>,
+): Promise<void> {
   const messages = await fetchRecentMessages(env, env.KAWAIKO_CHANNEL_ID);
   const now = Date.now();
   const appId = env.DISCORD_APPLICATION_ID;

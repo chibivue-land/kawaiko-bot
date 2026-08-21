@@ -85,6 +85,23 @@ export async function postScheduledMutter(env: Env, opts?: { force?: boolean }):
     return;
   }
 
+  try {
+    await postMutter(env, budget);
+    await budget.recordOutcome("mutter", true);
+  } catch (err) {
+    console.error("mutter failed:", err);
+    await budget.recordOutcome(
+      "mutter",
+      false,
+      err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+    );
+  }
+}
+
+async function postMutter(
+  env: Env,
+  budget: ReturnType<Env["BUDGET_TRACKER"]["get"]>,
+): Promise<void> {
   const seed = pickTopicSeed();
   const headlines = seed.startsWith("ニュース") ? await fetchNewsHeadlines() : [];
   const newsBlock =
