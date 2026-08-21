@@ -1,7 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
 import { generate } from "./ai/generate";
-import { postChannelMessage, withTyping } from "./discord/api";
+import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
+import { buildTranscript } from "./discord/transcript";
 import { isExplicitMention, stripBotMention } from "./discord/mention";
 import { gatherResearch, needsResearch } from "./research";
 import { buildSystemPrompt, jstNowLabel } from "./persona";
@@ -61,6 +62,8 @@ interface MessageCreate {
   author?: { id: string; bot?: boolean; username?: string; global_name?: string | null };
   member?: { nick?: string | null };
   mentions?: Array<{ id: string }>;
+  /** Present when the message is a reply; used to react to replies to kawaiko. */
+  referenced_message?: { author?: { id: string } } | null;
 }
 
 export class DiscordGateway extends DurableObject<Env> {
@@ -222,8 +225,10 @@ export class DiscordGateway extends DurableObject<Env> {
     const appId = this.env.DISCORD_APPLICATION_ID;
     const content = msg.content ?? "";
     if (!msg.author || msg.author.bot) return;
-    // Guild messages only (no DMs), and only when explicitly @mentioned.
-    if (!msg.guild_id || !isExplicitMention(appId, content, msg.mentions)) return;
+    if (!msg.guild_id) return; // Guild messages only (no DMs).
+    // React to explicit @mentions and to replies to kawaiko's own messages.
+    const isReplyToBot = msg.referenced_message?.author?.id === appId;
+    if (!isReplyToBot && !isExplicitMention(appId, content, msg.mentions)) return;
 
     const reply = (text: string) => postChannelMessage(this.env, msg.channel_id, text, msg.id);
     const outcome = (ok: boolean, error?: string, model?: string) =>

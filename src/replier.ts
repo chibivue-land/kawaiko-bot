@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { generate } from "./ai/generate";
 import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
+import { buildTranscript } from "./discord/transcript";
 import { buildSystemPrompt, jstNowLabel } from "./persona";
 import { shouldPost, type PostOutcome } from "./mutter";
 
@@ -58,11 +59,16 @@ async function postReply(
 
   const target = candidates[Math.floor(Math.random() * candidates.length)]!;
   const displayName = target.author.global_name ?? target.author.username ?? "誰か";
+  const transcript = buildTranscript(messages, {
+    botId: appId,
+    excludeId: target.id,
+    limit: 8,
+  });
 
   const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
     generate(env, {
       system: buildSystemPrompt(),
-      prompt: `今は ${jstNowLabel()}。Discord のチャンネルで ${displayName} さんがこう発言していた:
+      prompt: `今は ${jstNowLabel()}。${transcript ? `チャンネルの直近の流れ:\n${transcript}\n\n` : ""}この中で ${displayName} さんのこの発言に注目した:
 
 ${target.content}
 
