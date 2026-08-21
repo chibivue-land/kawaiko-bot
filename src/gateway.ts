@@ -259,9 +259,9 @@ export class DiscordGateway extends DurableObject<Env> {
 ${stripBotMention(appId, content) || "(本文なし、メンションだけ)"}
 
 kawaiko として返事して。最新情報が必要そうなら web_search を使ってよい。`,
-          maxSearches: 3,
-          effort: "medium",
-          maxTokens: 4096,
+          maxSearches: 0,
+          effort: "low",
+          maxTokens: 1024,
         }),
       );
       await budget.recordSpend(costUsd);

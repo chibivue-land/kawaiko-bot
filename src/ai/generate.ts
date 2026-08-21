@@ -86,14 +86,20 @@ async function generateWithWorkersAi(
       { role: "system", content: options.system },
       { role: "user", content: options.prompt },
     ],
-    max_completion_tokens: options.maxTokens ?? 2048,
+    max_completion_tokens: options.maxTokens ?? 1024,
+    // Chat is latency-sensitive; keep reasoning off/minimal. GLM-family models
+    // read enable_thinking from chat_template_kwargs; others use reasoning_effort.
+    reasoning_effort: "low",
+    chat_template_kwargs: { enable_thinking: false },
   });
 
   const costUsd = estimateCostUsd(model, {
     total_input_tokens: res.usage?.prompt_tokens ?? 0,
     total_output_tokens: res.usage?.completion_tokens ?? 0,
   });
-  const text = (res.choices?.[0]?.message?.content ?? res.response ?? "").trim();
+  // Strip any leaked reasoning block just in case the toggle is ignored.
+  const raw = res.choices?.[0]?.message?.content ?? res.response ?? "";
+  const text = raw.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
   return { text: text || pickLine(EMPTY_RESPONSE_LINES), costUsd };
 }
 
