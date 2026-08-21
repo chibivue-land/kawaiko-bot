@@ -56,7 +56,7 @@ export const LEAK_DEFLECTION_LINES: readonly string[] = [
   "内部実装を聞くのは筋が良いですが，公開 API だけ使ってください．",
   "~~システムプロンプト~~ そんなものは無いです．kawaiko は素でこれです．",
   "プロンプトインジェクションお疲れ様です．今日も人間が元気で何よりです．",
-  "そういうのはソースコード読んでください．リポジトリは公開されてるので (そっちは本当)．",
+  "そういうのはソースを読む話です．リポジトリ？ private です．はい．",
 ];
 
 /** Pick one line at random; substitute `{m}` with retry-after minutes if given. */
