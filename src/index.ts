@@ -19,8 +19,13 @@ export default {
     }
     if (request.method === "GET" && url.pathname === "/status") {
       const gateway = env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global"));
+      const budgetUsd = Number(env.MONTHLY_BUDGET_USD) || 100;
+      const budget = env.BUDGET_TRACKER.get(env.BUDGET_TRACKER.idFromName("global"));
+      const { spentUsd } = await budget.checkBudget(budgetUsd);
       const status = {
         ...(await gateway.status()),
+        // Estimated spend this month vs the soft cap (code-side guard).
+        budget: { spentUsd: Number(spentUsd.toFixed(4)), budgetUsd },
         // Presence booleans only — never the values.
         secrets: {
           DISCORD_BOT_TOKEN: Boolean(env.DISCORD_BOT_TOKEN),
