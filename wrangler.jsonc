@@ -18,9 +18,10 @@
     "crons": ["*/5 * * * *", "7 * * * *"],
   },
   "vars": {
-    // Cheap, capable, and browses via Google Search grounding.
-    // Free tier (AI Studio key): 1,000 requests/day, grounding allowance included.
-    "KAWAIKO_MODEL": "gemini-3.7-flash",
+    // Comma-separated model preference list. Models rejecting with quota or
+    // availability errors (e.g. not covered by the free tier) fall back to the
+    // next entry automatically.
+    "KAWAIKO_MODEL": "gemini-3.7-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite",
     // Probability that a mutter cron slot actually posts (0.0-1.0).
     "POST_PROBABILITY": "0.75",
     // Probability that a reply cron slot actually replies (0.0-1.0).

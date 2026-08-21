@@ -18,15 +18,51 @@ export interface GenerateResult {
   costUsd: number;
 }
 
+const DEFAULT_MODELS =
+  "gemini-3.7-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite";
+
+/** Errors worth falling back to the next model for (quota / availability). */
+function isFallbackError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const text = `${err.name} ${err.message}`;
+  return /\b(429|404|403|RESOURCE_EXHAUSTED|NOT_FOUND|PERMISSION_DENIED|quota)\b/i.test(text);
+}
+
 /**
  * Generate one kawaiko utterance with the Gemini Interactions API.
- * Browsing is provided by the built-in google_search tool (grounding);
- * grounded prompts have a free monthly allowance on Gemini 3.x models.
+ * Browsing is provided by the built-in google_search tool (grounding).
+ * KAWAIKO_MODEL is a comma-separated preference list; models that reject the
+ * request with quota/availability errors (e.g. no free-tier quota) are
+ * skipped in favor of the next entry.
  */
 export async function generate(env: Env, options: GenerateOptions): Promise<GenerateResult> {
   const client = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
-  const model = env.KAWAIKO_MODEL || "gemini-3.7-flash";
+  const models = (env.KAWAIKO_MODEL || DEFAULT_MODELS)
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
 
+  let lastError: unknown;
+  for (const model of models) {
+    try {
+      return await generateWith(client, model, options);
+    } catch (err) {
+      lastError = err;
+      if (isFallbackError(err)) {
+        console.warn(`generate: ${model} unavailable, trying next:`, String(err));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
+}
+
+async function generateWith(
+  client: GoogleGenAI,
+  model: string,
+  options: GenerateOptions,
+): Promise<GenerateResult> {
   const interaction = await client.interactions.create({
     model,
     input: options.prompt,
