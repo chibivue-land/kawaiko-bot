@@ -96,9 +96,9 @@ async function generateWithWorkersAi(
       { role: "user", content: options.prompt },
     ],
     max_completion_tokens: options.maxTokens ?? 1024,
-    // Chat is latency-sensitive; keep reasoning off/minimal. GLM-family models
-    // read enable_thinking from chat_template_kwargs; others use reasoning_effort.
-    reasoning_effort: "low",
+    // GLM-family models read enable_thinking from chat_template_kwargs;
+    // others honor reasoning_effort (wired to the caller's effort option).
+    reasoning_effort: options.effort ?? "low",
     chat_template_kwargs: { enable_thinking: false },
   });
 
