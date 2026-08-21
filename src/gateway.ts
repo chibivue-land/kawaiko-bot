@@ -42,6 +42,14 @@ interface GatewayPayload {
   d?: unknown;
 }
 
+interface GatewayStatus {
+  connected: boolean;
+  readyAt?: string;
+  botUser?: { id: string; username: string };
+  guildCount?: number;
+  lastClose?: { code: number; reason: string; at: string };
+}
+
 interface MessageCreate {
   id: string;
   channel_id: string;
@@ -59,6 +67,17 @@ export class DiscordGateway extends DurableObject<Env> {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private awaitingAck = false;
   private lastIdentifyAt = 0;
+
+  /** Connection diagnostics, served via GET /status on the Worker. */
+  async status(): Promise<GatewayStatus> {
+    const stored = await this.ctx.storage.get<Omit<GatewayStatus, "connected">>("status");
+    return { connected: this.open, ...stored };
+  }
+
+  private async recordStatus(patch: Partial<GatewayStatus>): Promise<void> {
+    const stored = (await this.ctx.storage.get<Omit<GatewayStatus, "connected">>("status")) ?? {};
+    await this.ctx.storage.put("status", { ...stored, ...patch });
+  }
 
   /** Idempotent: make sure a gateway connection exists and the watchdog alarm is armed. */
   async ensure(): Promise<string> {
@@ -94,6 +113,9 @@ export class DiscordGateway extends DurableObject<Env> {
     });
     ws.addEventListener("close", (event) => {
       console.warn(`gateway: closed (${event.code} ${event.reason})`);
+      void this.recordStatus({
+        lastClose: { code: event.code, reason: event.reason, at: new Date().toISOString() },
+      });
       this.teardown();
     });
     ws.addEventListener("error", () => {
@@ -150,7 +172,16 @@ export class DiscordGateway extends DurableObject<Env> {
         break;
       case Op.DISPATCH:
         if (payload.t === "READY") {
+          const ready = payload.d as {
+            user?: { id: string; username: string };
+            guilds?: unknown[];
+          };
           console.log("gateway: ready");
+          await this.recordStatus({
+            readyAt: new Date().toISOString(),
+            botUser: ready.user ? { id: ready.user.id, username: ready.user.username } : undefined,
+            guildCount: ready.guilds?.length,
+          });
         } else if (payload.t === "MESSAGE_CREATE") {
           await this.onMessageCreate(payload.d as MessageCreate);
         }

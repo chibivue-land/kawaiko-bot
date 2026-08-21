@@ -17,6 +17,14 @@ export default {
       ctx.waitUntil(ensureGateway(env));
       return new Response("kawaiko-bot is alive", { status: 200 });
     }
+    if (request.method === "GET" && url.pathname === "/status") {
+      const gateway = env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global"));
+      const status = await gateway.status();
+      ctx.waitUntil(ensureGateway(env));
+      return new Response(JSON.stringify(status, null, 2), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     return new Response("not found", { status: 404 });
   },
 
