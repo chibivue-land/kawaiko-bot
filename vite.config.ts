@@ -8,14 +8,16 @@ export default defineConfig(({ mode }) => ({
     include: ["test/**/*.test.ts"],
   },
   // Vite Task definitions (invoked via `vp run <task>`); no npm scripts in this repo.
+  // Both tasks have side effects, so opt out of Vite Task's result caching.
   run: {
     tasks: {
       deploy: {
         command: "vp build && wrangler deploy",
+        cache: false,
       },
       "sync-avatar": {
         command: "node scripts/sync-avatar.ts",
-        envs: ["DISCORD_BOT_TOKEN"],
+        cache: false,
       },
     },
   },
