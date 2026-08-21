@@ -1,7 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import type { Env } from "../env";
 import { estimateCostUsd } from "./cost";
-import { EMPTY_RESPONSE_LINES, REFUSAL_LINES, pickLine } from "../lines";
+import { EMPTY_RESPONSE_LINES, LEAK_DEFLECTION_LINES, REFUSAL_LINES, pickLine } from "../lines";
+import { leaksSystemPrompt } from "../leakguard";
 
 export interface GenerateOptions {
   system: string;
@@ -51,9 +52,15 @@ export async function generate(env: Env, options: GenerateOptions): Promise<Gene
   let lastError: unknown;
   for (const model of models) {
     try {
-      return model.startsWith("@cf/")
+      const result = model.startsWith("@cf/")
         ? await generateWithWorkersAi(env, model, options)
         : await generateWithGemini(client, model, options);
+      // Never let the system prompt (or corpus) reach Discord verbatim.
+      if (leaksSystemPrompt(result.text, options.system)) {
+        console.warn("generate: blocked a system-prompt leak");
+        return { ...result, text: pickLine(LEAK_DEFLECTION_LINES) };
+      }
+      return result;
     } catch (err) {
       lastError = err;
       if (isFallbackError(err)) {

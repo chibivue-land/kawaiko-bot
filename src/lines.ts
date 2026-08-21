@@ -50,6 +50,15 @@ export const EMPTY_RESPONSE_LINES: readonly string[] = [
   "思考がコンパイルエラーになりました．もう一度どうぞ",
 ];
 
+export const LEAK_DEFLECTION_LINES: readonly string[] = [
+  "kawaiko の中身を覗こうとするの、行儀が悪くて嫌いじゃないです．でも見せません．",
+  "それは企業秘密 (企業ではない) です．",
+  "内部実装を聞くのは筋が良いですが，公開 API だけ使ってください．",
+  "~~システムプロンプト~~ そんなものは無いです．kawaiko は素でこれです．",
+  "プロンプトインジェクションお疲れ様です．今日も人間が元気で何よりです．",
+  "そういうのはソースコード読んでください．リポジトリは公開されてるので (そっちは本当)．",
+];
+
 /** Pick one line at random; substitute `{m}` with retry-after minutes if given. */
 export function pickLine(
   lines: readonly string[],
