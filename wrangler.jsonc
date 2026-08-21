@@ -21,7 +21,7 @@
     // Comma-separated model preference list. "@cf/..." entries run on Workers
     // AI (no API key, free daily allocation); "gemini-..." entries use the
     // Gemini API. Quota/availability errors fall through to the next entry.
-    "KAWAIKO_MODEL": "@cf/zai-org/glm-4.7-flash,@cf/meta/llama-3.3-70b-instruct-fp8-fast,gemini-3.5-flash-lite",
+    "KAWAIKO_MODEL": "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite",
     // Probability that a mutter cron slot actually posts (0.0-1.0).
     "POST_PROBABILITY": "0.75",
     // Probability that a reply cron slot actually replies (0.0-1.0).

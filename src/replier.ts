@@ -25,8 +25,8 @@ export async function postRandomReply(env: Env, opts?: { force?: boolean }): Pro
   }
 
   try {
-    await postReply(env, budget);
-    await budget.recordOutcome("reply", true);
+    const model = await postReply(env, budget);
+    await budget.recordOutcome("reply", true, undefined, model);
     return { ok: true };
   } catch (err) {
     console.error("replier failed:", err);
@@ -39,7 +39,7 @@ export async function postRandomReply(env: Env, opts?: { force?: boolean }): Pro
 async function postReply(
   env: Env,
   budget: ReturnType<Env["BUDGET_TRACKER"]["get"]>,
-): Promise<void> {
+): Promise<string | undefined> {
   const messages = await fetchRecentMessages(env, env.KAWAIKO_CHANNEL_ID);
   const now = Date.now();
   const appId = env.DISCORD_APPLICATION_ID;
@@ -53,13 +53,13 @@ async function postReply(
   );
   if (candidates.length === 0) {
     console.log("replier: no recent human messages to bother");
-    return;
+    return undefined;
   }
 
   const target = candidates[Math.floor(Math.random() * candidates.length)]!;
   const displayName = target.author.global_name ?? target.author.username ?? "誰か";
 
-  const { text, costUsd } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
+  const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
     generate(env, {
       system: buildSystemPrompt(),
       prompt: `今は ${jstNowLabel()}。Discord のチャンネルで ${displayName} さんがこう発言していた:
@@ -75,5 +75,6 @@ ${target.content}
 
   await budget.recordSpend(costUsd);
   await postChannelMessage(env, env.KAWAIKO_CHANNEL_ID, text, target.id);
-  console.log(`replier: replied to ${target.id} (~$${costUsd.toFixed(4)})`);
+  console.log(`replier: replied to ${target.id} via ${model} (~$${costUsd.toFixed(4)})`);
+  return model;
 }

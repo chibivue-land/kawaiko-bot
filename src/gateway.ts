@@ -49,7 +49,7 @@ interface GatewayStatus {
   guildCount?: number;
   lastClose?: { code: number; reason: string; at: string };
   /** Outcome of the most recent mention handling, for debugging. */
-  lastMention?: { at: string; ok: boolean; error?: string };
+  lastMention?: { at: string; ok: boolean; error?: string; model?: string };
 }
 
 interface MessageCreate {
@@ -225,8 +225,8 @@ export class DiscordGateway extends DurableObject<Env> {
     if (!msg.guild_id || !isExplicitMention(appId, content, msg.mentions)) return;
 
     const reply = (text: string) => postChannelMessage(this.env, msg.channel_id, text, msg.id);
-    const outcome = (ok: boolean, error?: string) =>
-      this.recordStatus({ lastMention: { at: new Date().toISOString(), ok, error } });
+    const outcome = (ok: boolean, error?: string, model?: string) =>
+      this.recordStatus({ lastMention: { at: new Date().toISOString(), ok, error, model } });
 
     try {
       // Same per-user limits as the slash command.
@@ -251,7 +251,7 @@ export class DiscordGateway extends DurableObject<Env> {
 
       const displayName =
         msg.member?.nick ?? msg.author.global_name ?? msg.author.username ?? "誰か";
-      const { text, costUsd } = await withTyping(this.env, msg.channel_id, () =>
+      const { text, costUsd, model } = await withTyping(this.env, msg.channel_id, () =>
         generate(this.env, {
           system: buildSystemPrompt(),
           prompt: `今は ${jstNowLabel()}。Discord で ${displayName} さんからメンションでこう話しかけられた:
@@ -266,7 +266,7 @@ kawaiko として返事して。最新情報が必要そうなら web_search を
       );
       await budget.recordSpend(costUsd);
       await reply(text);
-      await outcome(true);
+      await outcome(true, undefined, model);
     } catch (err) {
       console.error("gateway: mention reply failed:", err);
       await outcome(false, err instanceof Error ? `${err.name}: ${err.message}` : String(err));

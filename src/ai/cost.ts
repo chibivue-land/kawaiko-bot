@@ -24,6 +24,7 @@ interface ModelRate {
 const RATES: Array<[prefix: string, rate: ModelRate]> = [
   // Workers AI is billed in neurons with a free daily allocation; these token
   // rates are the paid-tier equivalents, kept as a conservative estimate.
+  ["@cf/google/gemma-4-26b-a4b-it", { input: 0.1, output: 0.3 }],
   ["@cf/zai-org/glm-4.7-flash", { input: 0.06, output: 0.4 }],
   ["@cf/", { input: 0.3, output: 2.5 }],
   ["gemini-3.7-flash", { input: 0.75, output: 3.75 }],

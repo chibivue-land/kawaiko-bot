@@ -16,12 +16,14 @@ export interface GenerateResult {
   text: string;
   /** Estimated cost (USD) for this request. */
   costUsd: number;
+  /** The model that actually served the response. */
+  model: string;
 }
 
 // Workers AI first (no API key, free daily allocation on the Cloudflare
 // account itself); Gemini entries kick in only if a key with quota exists.
 const DEFAULT_MODELS =
-  "@cf/zai-org/glm-4.7-flash,@cf/meta/llama-3.3-70b-instruct-fp8-fast,gemini-3.5-flash-lite";
+  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite";
 
 /** Errors worth falling back to the next model for (quota / availability). */
 function isFallbackError(err: unknown): boolean {
@@ -100,7 +102,7 @@ async function generateWithWorkersAi(
   // Strip any leaked reasoning block just in case the toggle is ignored.
   const raw = res.choices?.[0]?.message?.content ?? res.response ?? "";
   const text = raw.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-  return { text: text || pickLine(EMPTY_RESPONSE_LINES), costUsd };
+  return { text: text || pickLine(EMPTY_RESPONSE_LINES), costUsd, model };
 }
 
 async function generateWithGemini(
@@ -124,9 +126,9 @@ async function generateWithGemini(
   const costUsd = estimateCostUsd(model, interaction.usage ?? {});
 
   if (interaction.status === "failed" || interaction.status === "incomplete") {
-    return { text: pickLine(REFUSAL_LINES), costUsd };
+    return { text: pickLine(REFUSAL_LINES), costUsd, model };
   }
 
   const text = interaction.output_text?.trim() ?? "";
-  return { text: text || pickLine(EMPTY_RESPONSE_LINES), costUsd };
+  return { text: text || pickLine(EMPTY_RESPONSE_LINES), costUsd, model };
 }

@@ -95,8 +95,8 @@ export async function postScheduledMutter(
   }
 
   try {
-    await postMutter(env, budget);
-    await budget.recordOutcome("mutter", true);
+    const model = await postMutter(env, budget);
+    await budget.recordOutcome("mutter", true, undefined, model);
     return { ok: true };
   } catch (err) {
     console.error("mutter failed:", err);
@@ -109,14 +109,14 @@ export async function postScheduledMutter(
 async function postMutter(
   env: Env,
   budget: ReturnType<Env["BUDGET_TRACKER"]["get"]>,
-): Promise<void> {
+): Promise<string> {
   const seed = pickTopicSeed();
   const headlines = seed.startsWith("ニュース") ? await fetchNewsHeadlines() : [];
   const newsBlock =
     headlines.length > 0
       ? `\n直近のニュース見出し:\n${headlines.map((h) => `- ${h}`).join("\n")}\n`
       : "";
-  const { text, costUsd } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
+  const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
     generate(env, {
       system: buildSystemPrompt(),
       prompt: `今は ${jstNowLabel()}。Discord の雑談チャンネルに、誰に宛てるでもなくテキトーに一言呟いて。
@@ -134,5 +134,6 @@ ${MUTTER_STYLE}
 
   await budget.recordSpend(costUsd);
   await postChannelMessage(env, env.KAWAIKO_CHANNEL_ID, text);
-  console.log(`mutter: posted (~$${costUsd.toFixed(4)})`);
+  console.log(`mutter: posted via ${model} (~$${costUsd.toFixed(4)})`);
+  return model;
 }

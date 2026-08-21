@@ -52,6 +52,8 @@ export interface OpOutcome {
   at: string;
   ok: boolean;
   error?: string;
+  /** Model that served the generation, when known. */
+  model?: string;
 }
 
 /**
@@ -60,11 +62,17 @@ export interface OpOutcome {
  * Also keeps the outcome of the latest mutter/reply for /status diagnostics.
  */
 export class BudgetTracker extends DurableObject {
-  async recordOutcome(kind: "mutter" | "reply", ok: boolean, error?: string): Promise<void> {
+  async recordOutcome(
+    kind: "mutter" | "reply",
+    ok: boolean,
+    error?: string,
+    model?: string,
+  ): Promise<void> {
     await this.ctx.storage.put(`last:${kind}`, {
       at: new Date().toISOString(),
       ok,
       error,
+      model,
     } satisfies OpOutcome);
   }
 
