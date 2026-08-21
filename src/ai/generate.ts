@@ -33,21 +33,22 @@ export interface GenerateResult {
 const DEFAULT_MODELS =
   "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite";
 
-/** Errors worth falling back to the next model for (quota / availability). */
-function isFallbackError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  const text = `${err.name} ${err.message}`;
-  return /\b(429|404|403|RESOURCE_EXHAUSTED|NOT_FOUND|PERMISSION_DENIED|quota|no such model|capacity)\b/i.test(
-    text,
-  );
+/** Readable one-liner for a failure from any provider, for logs and /status. */
+function describeError(err: unknown): string {
+  if (err instanceof Error) return `${err.name}: ${err.message}`.trim();
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
 }
 
 /**
- * Generate one kawaiko utterance with the Gemini Interactions API.
+ * Generate one kawaiko utterance.
  * Browsing is provided by the built-in google_search tool (grounding).
- * KAWAIKO_MODEL is a comma-separated preference list; models that reject the
- * request with quota/availability errors (e.g. no free-tier quota) are
- * skipped in favor of the next entry.
+ * KAWAIKO_MODEL is a comma-separated preference list tried in order: any model
+ * that fails for any reason hands off to the next one, and only the last
+ * failure propagates.
  */
 export async function generate(env: Env, options: GenerateOptions): Promise<GenerateResult> {
   const client = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
@@ -57,7 +58,7 @@ export async function generate(env: Env, options: GenerateOptions): Promise<Gene
     .filter(Boolean);
 
   let lastError: unknown;
-  for (const model of models) {
+  for (const [index, model] of models.entries()) {
     try {
       const result = model.startsWith("@cf/")
         ? await generateWithWorkersAi(env, model, options)
@@ -69,19 +70,28 @@ export async function generate(env: Env, options: GenerateOptions): Promise<Gene
       }
       return result;
     } catch (err) {
+      // Always fall through. The preference list exists precisely so one
+      // provider running dry does not take kawaiko down, and the failure modes
+      // are not enumerable in advance: this used to match error text against a
+      // list of "retryable" codes and went down the day Workers AI answered
+      // "AiError: 4006: you have used up your daily free allocation of 10,000
+      // neurons" — a message with none of those codes in it. Only the last
+      // model's failure is fatal now.
       lastError = err;
-      if (isFallbackError(err)) {
-        console.warn(`generate: ${model} unavailable, trying next:`, String(err));
-        continue;
-      }
-      throw err;
+      console.warn(
+        `generate: ${model} failed (${index + 1}/${models.length}): ${describeError(err)}`,
+      );
     }
   }
   throw lastError;
 }
 
-/** Attempts (including the first) before we give up on getting a fresh line. */
-const VARIED_ATTEMPTS = 3;
+/**
+ * Attempts (including the first) before we settle for the least repetitive one.
+ * Kept at 2: every retry is another full generation against a small daily free
+ * allocation, and one re-roll already breaks the overwhelming majority of loops.
+ */
+const VARIED_ATTEMPTS = 2;
 /** At or above this, the "fresh" pick is still effectively the same sentence. */
 const HARD_REPEAT_SCORE = 0.9;
 
@@ -107,10 +117,18 @@ export async function generateVaried(
   let costUsd = 0;
 
   for (let attempt = 0; attempt < VARIED_ATTEMPTS; attempt++) {
-    const result = await generate(
-      env,
-      attempt === 0 ? options : { ...options, prompt: `${options.prompt}\n\n${RETRY_NUDGE}` },
-    );
+    let result: GenerateResult;
+    try {
+      result = await generate(
+        env,
+        attempt === 0 ? options : { ...options, prompt: `${options.prompt}\n\n${RETRY_NUDGE}` },
+      );
+    } catch (err) {
+      // A re-roll is a nice-to-have: never drop a usable answer to get one.
+      if (!best) throw err;
+      console.warn(`generate: re-roll ${attempt + 1} failed, keeping the earlier line`);
+      break;
+    }
     costUsd += result.costUsd;
     const score = repetitionScore(result.text, avoid);
     if (score < bestScore) {
