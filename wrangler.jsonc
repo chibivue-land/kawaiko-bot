@@ -26,9 +26,11 @@
     "POST_PROBABILITY": "0.75",
     // Probability that a reply cron slot actually replies (0.0-1.0).
     "REPLY_PROBABILITY": "0.7",
-    // Per-user limits for mention replies.
-    "RATE_LIMIT_PER_HOUR": "30",
-    "RATE_LIMIT_PER_DAY": "150",
+    // Per-user limits for mention replies. Deliberately huge: humans never
+    // hit these; they only stop runaway scripts/bot loops. Cost is bounded by
+    // the budget guard and the Workers AI free allocation anyway.
+    "RATE_LIMIT_PER_HOUR": "500",
+    "RATE_LIMIT_PER_DAY": "5000",
     // Soft monthly cost cap (USD) enforced in code via estimated usage.
     // Also set a hard Workspace spend limit in the Anthropic Console (see README).
     "MONTHLY_BUDGET_USD": "100",
