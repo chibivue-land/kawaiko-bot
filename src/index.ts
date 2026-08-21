@@ -25,6 +25,24 @@ export default {
         headers: { "Content-Type": "application/json" },
       });
     }
+    // Manual triggers (GitHub Actions "Mutter" workflow). Bypasses the
+    // probability gate; the budget guard still applies.
+    if (request.method === "POST" && url.pathname.startsWith("/trigger/")) {
+      const auth = request.headers.get("Authorization");
+      if (!env.TRIGGER_TOKEN || auth !== `Bearer ${env.TRIGGER_TOKEN}`) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      const kind = url.pathname.slice("/trigger/".length);
+      if (kind === "mutter") {
+        ctx.waitUntil(postScheduledMutter(env, { force: true }));
+        return new Response("mutter triggered\n", { status: 202 });
+      }
+      if (kind === "reply") {
+        ctx.waitUntil(postRandomReply(env, { force: true }));
+        return new Response("reply triggered\n", { status: 202 });
+      }
+      return new Response("unknown trigger", { status: 400 });
+    }
     return new Response("not found", { status: 404 });
   },
 

@@ -42,10 +42,12 @@ jobs:
           jq -n \
             --arg discord "$DISCORD_BOT_TOKEN" \
             --arg gemini "$GEMINI_API_KEY" \
-            '{DISCORD_BOT_TOKEN: $discord, GEMINI_API_KEY: $gemini}' \
+            --arg trigger "$TRIGGER_TOKEN" \
+            '{DISCORD_BOT_TOKEN: $discord, GEMINI_API_KEY: $gemini, TRIGGER_TOKEN: $trigger}' \
             | wrangler secret bulk
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}

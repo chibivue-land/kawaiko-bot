@@ -15,6 +15,7 @@ export interface Env {
   // secrets (wrangler secret put)
   DISCORD_BOT_TOKEN: string;
   GEMINI_API_KEY: string;
+  TRIGGER_TOKEN: string;
 
   // bindings
   USER_RATE_LIMITER: DurableObjectNamespace<UserRateLimiter>;

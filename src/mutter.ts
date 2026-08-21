@@ -45,8 +45,8 @@ export function shouldPost(probability: string, random: () => number = Math.rand
 }
 
 /** Cron entry point: probability gate -> budget gate -> generate -> post. */
-export async function postScheduledMutter(env: Env): Promise<void> {
-  if (!shouldPost(env.POST_PROBABILITY)) {
+export async function postScheduledMutter(env: Env, opts?: { force?: boolean }): Promise<void> {
+  if (!opts?.force && !shouldPost(env.POST_PROBABILITY)) {
     console.log("mutter: skipped by probability gate");
     return;
   }

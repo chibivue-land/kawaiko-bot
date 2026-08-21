@@ -1,0 +1,26 @@
+name: Mutter
+
+# Manually make kawaiko post right now (bypasses the probability gate,
+# still subject to the monthly budget guard).
+on:
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: What kawaiko should do
+        type: choice
+        default: mutter
+        options:
+          - mutter
+          - reply
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger kawaiko
+        run: |
+          curl -sf -X POST \
+            "https://kawaiko-bot.ubuge1122.workers.dev/trigger/${{ inputs.kind }}" \
+            -H "Authorization: Bearer $TRIGGER_TOKEN"
+        env:
+          TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}

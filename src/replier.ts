@@ -11,8 +11,8 @@ const MAX_MESSAGE_AGE_MS = 3 * 3_600_000;
  * Every couple of hours, pick a random recent human message in the channel
  * and reply to it uninvited. Kawaiko hates humanity but cannot stop replying.
  */
-export async function postRandomReply(env: Env): Promise<void> {
-  if (!shouldPost(env.REPLY_PROBABILITY)) {
+export async function postRandomReply(env: Env, opts?: { force?: boolean }): Promise<void> {
+  if (!opts?.force && !shouldPost(env.REPLY_PROBABILITY)) {
     console.log("replier: skipped by probability gate");
     return;
   }
