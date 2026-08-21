@@ -1,8 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 import type { Env } from "../env";
 import { estimateCostUsd } from "./cost";
-import { EMPTY_RESPONSE_LINES, LEAK_DEFLECTION_LINES, REFUSAL_LINES, pickLine } from "../lines";
+import {
+  EMPTY_RESPONSE_LINES,
+  LEAK_DEFLECTION_LINES,
+  REFUSAL_LINES,
+  REPETITION_BREAK_LINES,
+  pickLine,
+} from "../lines";
 import { leaksSystemPrompt } from "../leakguard";
+import { RETRY_NUDGE, isRepetitive, repetitionScore } from "../repetition";
 
 export interface GenerateOptions {
   system: string;
@@ -71,6 +78,57 @@ export async function generate(env: Env, options: GenerateOptions): Promise<Gene
     }
   }
   throw lastError;
+}
+
+/** Attempts (including the first) before we give up on getting a fresh line. */
+const VARIED_ATTEMPTS = 3;
+/** At or above this, the "fresh" pick is still effectively the same sentence. */
+const HARD_REPEAT_SCORE = 0.9;
+
+/**
+ * `generate`, but refusing to hand back something kawaiko just said.
+ *
+ * The channel transcript in the prompt contains kawaiko's own lines, and small
+ * models happily lock onto that as a template — which is how a channel ends up
+ * receiving the same sentence skeleton forever. Retry with an explicit nudge,
+ * keep the least repetitive candidate, and bail out to a canned break line if
+ * even that is a verbatim repeat. Cost is summed across attempts so the budget
+ * tracker still sees the real spend.
+ */
+export async function generateVaried(
+  env: Env,
+  options: GenerateOptions,
+  avoid: readonly string[],
+): Promise<GenerateResult> {
+  if (avoid.length === 0) return generate(env, options);
+
+  let best: GenerateResult | undefined;
+  let bestScore = Number.POSITIVE_INFINITY;
+  let costUsd = 0;
+
+  for (let attempt = 0; attempt < VARIED_ATTEMPTS; attempt++) {
+    const result = await generate(
+      env,
+      attempt === 0 ? options : { ...options, prompt: `${options.prompt}\n\n${RETRY_NUDGE}` },
+    );
+    costUsd += result.costUsd;
+    const score = repetitionScore(result.text, avoid);
+    if (score < bestScore) {
+      best = result;
+      bestScore = score;
+    }
+    if (!isRepetitive(result.text, avoid)) return { ...result, costUsd };
+    console.warn(
+      `generate: attempt ${attempt + 1} repeated a recent line (score ${score.toFixed(2)})`,
+    );
+  }
+
+  const fallback = best!;
+  if (bestScore >= HARD_REPEAT_SCORE) {
+    console.warn("generate: every attempt was a verbatim repeat, breaking the loop");
+    return { ...fallback, text: pickLine(REPETITION_BREAK_LINES), costUsd };
+  }
+  return { ...fallback, costUsd };
 }
 
 /** Workers AI chat models (OpenAI-compatible response; older ones use `response`). */

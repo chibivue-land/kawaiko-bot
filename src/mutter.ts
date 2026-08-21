@@ -1,7 +1,9 @@
 import type { Env } from "./env";
-import { generate } from "./ai/generate";
-import { postChannelMessage, withTyping } from "./discord/api";
-import { buildSystemPrompt, jstNowLabel } from "./persona";
+import { generateVaried } from "./ai/generate";
+import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
+import { collectOwnLines, sinceReset } from "./discord/transcript";
+import { buildSystemPrompt, jstNowLabel, pickReplyLength } from "./persona";
+import { AVOID_LIMIT, buildAvoidBlock } from "./repetition";
 
 /**
  * Topic seeds for the scheduled mutters. One is picked at random per post.
@@ -116,20 +118,33 @@ async function postMutter(
     headlines.length > 0
       ? `\n直近のニュース見出し:\n${headlines.map((h) => `- ${h}`).join("\n")}\n`
       : "";
+  // What kawaiko said lately in its home channel; mutters must not echo it.
+  const memory = env.CHANNEL_MEMORY.get(env.CHANNEL_MEMORY.idFromName(env.KAWAIKO_CHANNEL_ID));
+  const recent = sinceReset(
+    await fetchRecentMessages(env, env.KAWAIKO_CHANNEL_ID, 30).catch(() => []),
+    await memory.resetAt(),
+  );
+  const ownLines = collectOwnLines(recent, env.DISCORD_APPLICATION_ID, AVOID_LIMIT);
+
   const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
-    generate(env, {
-      system: buildSystemPrompt(),
-      prompt: `今は ${jstNowLabel()}。Discord の雑談チャンネルに、誰に宛てるでもなくテキトーに一言呟いて。
+    generateVaried(
+      env,
+      {
+        system: buildSystemPrompt(),
+        prompt: `今は ${jstNowLabel()}。Discord の雑談チャンネルに、誰に宛てるでもなくテキトーに一言呟いて。
 
 ネタの方向性: ${seed}
 ${newsBlock}
-${MUTTER_STYLE}
+${MUTTER_STYLE}${buildAvoidBlock(ownLines)}
 
-毎回同じような書き出しにしない。短くてよい (1〜3 文)。`,
-      maxSearches: 0,
-      effort: "low",
-      maxTokens: 2048,
-    }),
+今回の長さ (毎回変える。直前の呟きと同じ分量にしない): ${pickReplyLength()}
+毎回同じような書き出しにしない。`,
+        maxSearches: 0,
+        effort: "low",
+        maxTokens: 2048,
+      },
+      ownLines,
+    ),
   );
 
   await budget.recordSpend(costUsd);

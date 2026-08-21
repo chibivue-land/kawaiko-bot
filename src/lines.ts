@@ -50,6 +50,31 @@ export const EMPTY_RESPONSE_LINES: readonly string[] = [
   "思考がコンパイルエラーになりました．もう一度どうぞ",
 ];
 
+/**
+ * Last resort when every regeneration attempt still came back as the same line
+ * kawaiko just posted. Posting the identical sentence again is worse than
+ * openly bailing out of the loop.
+ */
+export const REPETITION_BREAK_LINES: readonly string[] = [
+  "同じことばかり言っている気がしてきました．別の話をしましょう🦆",
+  "はい．さっきと同じ返事になりそうなので今回はパスします．",
+  "kawaiko、同じ型に嵌ってました．~~様式美~~ ただの手抜きです．",
+  "そのくだり、さっきもやりましたね．別の角度をください．",
+  "ループを検知しました．無限再帰は kawaiko でも嫌いです．",
+];
+
+/**
+ * Acknowledgement for "@kawaiko reset" — the channel's history is now ignored.
+ * Canned on purpose: the whole point is to spend no tokens and no context.
+ */
+export const RESET_LINES: readonly string[] = [
+  "はい．このチャンネルのことは全部忘れました．また一から始めましょう．",
+  "記憶を捨てました．~~もともと大したことは覚えていない~~ 心機一転です．",
+  "リセット完了です．さっきまでの kawaiko は他人ということで．",
+  "このチャンネルのログ、頭から消しました (他のチャンネルはそのままです)",
+  "忘れました．人間のことは覚えていたくないので好都合です🦆",
+];
+
 export const LEAK_DEFLECTION_LINES: readonly string[] = [
   "kawaiko の中身を覗こうとするの、行儀が悪くて嫌いじゃないです．でも見せません．",
   "それは企業秘密 (企業ではない) です．",

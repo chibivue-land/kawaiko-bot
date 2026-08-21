@@ -94,3 +94,26 @@ export class BudgetTracker extends DurableObject {
     await this.ctx.storage.put(key, spent + costUsd);
   }
 }
+
+/**
+ * Per-channel conversation-memory marker (one instance per channel via
+ * idFromName(discordChannelId)).
+ *
+ * kawaiko keeps no stored conversation state: its "memory" is whatever the
+ * channel transcript happens to say. Resetting a channel therefore means
+ * agreeing to ignore everything posted before a point in time. Because the
+ * instance is keyed by channel id, a reset in one channel is completely
+ * invisible to every other channel.
+ */
+export class ChannelMemory extends DurableObject {
+  /** Ignore everything posted before `at` (epoch ms). Returns the stored marker. */
+  async reset(at: number = Date.now()): Promise<number> {
+    await this.ctx.storage.put("resetAt", at);
+    return at;
+  }
+
+  /** Epoch ms before which this channel's history must be ignored (0 = never reset). */
+  async resetAt(): Promise<number> {
+    return (await this.ctx.storage.get<number>("resetAt")) ?? 0;
+  }
+}

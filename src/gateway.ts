@@ -1,12 +1,20 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
-import { generate } from "./ai/generate";
+import { generateVaried } from "./ai/generate";
 import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
-import { buildTranscript } from "./discord/transcript";
+import { buildTranscript, collectOwnLines, sinceReset } from "./discord/transcript";
 import { isExplicitMention, stripBotMention } from "./discord/mention";
 import { gatherResearch, needsResearch } from "./research";
-import { buildSystemPrompt, jstNowLabel } from "./persona";
-import { BUDGET_EXCEEDED_LINES, ERROR_LINES, RATE_LIMITED_LINES, pickLine } from "./lines";
+import { VARIETY_RULES, buildDeliveryBlock, buildSystemPrompt, jstNowLabel } from "./persona";
+import {
+  BUDGET_EXCEEDED_LINES,
+  ERROR_LINES,
+  RATE_LIMITED_LINES,
+  RESET_LINES,
+  pickLine,
+} from "./lines";
+import { isResetCommand } from "./commands";
+import { AVOID_LIMIT, buildAvoidBlock } from "./repetition";
 
 /**
  * Discord Gateway client living in a Durable Object.
@@ -57,6 +65,8 @@ interface GatewayStatus {
 interface MessageCreate {
   id: string;
   channel_id: string;
+  /** ISO timestamp assigned by Discord. */
+  timestamp?: string;
   guild_id?: string;
   content?: string;
   author?: { id: string; bot?: boolean; username?: string; global_name?: string | null };
@@ -234,7 +244,25 @@ export class DiscordGateway extends DurableObject<Env> {
     const outcome = (ok: boolean, error?: string, model?: string) =>
       this.recordStatus({ lastMention: { at: new Date().toISOString(), ok, error, model } });
 
+    // One ChannelMemory instance per channel id: a reset here is invisible
+    // to every other channel kawaiko sits in.
+    const memory = this.env.CHANNEL_MEMORY.get(this.env.CHANNEL_MEMORY.idFromName(msg.channel_id));
+
     try {
+      const body = stripBotMention(appId, content);
+      if (isResetCommand(body)) {
+        // Escape hatch for a channel stuck in a loop. Costs no tokens, so it
+        // runs before the rate-limit and budget gates on purpose.
+        // Cut at Discord's own timestamp for the command (no clock skew, and
+        // the command message itself falls outside the marker).
+        const at = msg.timestamp ? Date.parse(msg.timestamp) : Number.NaN;
+        await memory.reset(Number.isFinite(at) ? at : Date.now());
+        await reply(pickLine(RESET_LINES));
+        console.log(`gateway: memory reset for channel ${msg.channel_id}`);
+        await outcome(true);
+        return;
+      }
+
       // Same per-user limits as the slash command.
       const limiter = this.env.USER_RATE_LIMITER.get(
         this.env.USER_RATE_LIMITER.idFromName(msg.author.id),
@@ -257,12 +285,20 @@ export class DiscordGateway extends DurableObject<Env> {
 
       const displayName =
         msg.member?.nick ?? msg.author.global_name ?? msg.author.username ?? "誰か";
-      const question = stripBotMention(appId, content);
+      const question = body;
       const { text, costUsd, model } = await withTyping(this.env, msg.channel_id, async () => {
         // Recent channel history (kawaiko's own lines included) = conversation memory.
-        const transcript = await fetchRecentMessages(this.env, msg.channel_id, 15)
-          .then((m) => buildTranscript(m, { botId: appId, excludeId: msg.id, limit: 12 }))
-          .catch(() => "");
+        // Fetch wide: near-duplicate self-lines get dropped from the transcript.
+        const fetched = await fetchRecentMessages(this.env, msg.channel_id, 30).catch(() => []);
+        // Anything before this channel's own reset marker is off limits.
+        const recent = sinceReset(fetched, await memory.resetAt());
+        const transcript = buildTranscript(recent, {
+          botId: appId,
+          excludeId: msg.id,
+          limit: 12,
+        });
+        // What kawaiko just said in this channel, so it stops echoing itself.
+        const ownLines = collectOwnLines(recent, appId, AVOID_LIMIT);
         const transcriptBlock = transcript
           ? `
 
@@ -282,19 +318,27 @@ ${transcript}`
 参考情報 (web 検索結果の抜粋。鵜呑みにせず取捨選択して使う。関係ないものは無視):
 ${research}`
           : "";
-        return generate(this.env, {
-          system: buildSystemPrompt(),
-          prompt: `今は ${jstNowLabel()}。${transcriptBlock}
+        return generateVaried(
+          this.env,
+          {
+            system: buildSystemPrompt(),
+            prompt: `今は ${jstNowLabel()}。${transcriptBlock}
 
 この流れで、${displayName} さんが kawaiko に言った:
 
-${question || "(本文なし、メンションだけ)"}${researchBlock}
+${question || "(本文なし、メンションだけ)"}${researchBlock}${buildAvoidBlock(ownLines)}
 
-会話の流れを踏まえて kawaiko として返事して。ログの中で進行中の遊びやお題 (しりとり・大喜利・クイズなど) があるなら、ルールを理解してちゃんと乗る。分からないふりをしない。直前の自分の発言と矛盾しない。同じことを繰り返さない。問いかけには具体的に答える。知らないことは適当に断言しない。自分の名前は必ず「kawaiko」と表記する。`,
-          maxSearches: 0,
-          effort: "medium",
-          maxTokens: 1024,
-        });
+会話の流れを踏まえて kawaiko として返事して。ログの中で進行中の遊びやお題 (しりとり・大喜利・クイズなど) があるなら、ルールを理解してちゃんと乗る。分からないふりをしない。直前の自分の発言と矛盾しない。問いかけには具体的に答える。知らないことは適当に断言しない。自分の名前は必ず「kawaiko」と表記する。
+
+${buildDeliveryBlock()}
+
+${VARIETY_RULES}`,
+            maxSearches: 0,
+            effort: "medium",
+            maxTokens: 1024,
+          },
+          ownLines,
+        );
       });
       await budget.recordSpend(costUsd);
       await reply(text);

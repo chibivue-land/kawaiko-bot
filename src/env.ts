@@ -1,4 +1,4 @@
-import type { UserRateLimiter, BudgetTracker } from "./do";
+import type { UserRateLimiter, BudgetTracker, ChannelMemory } from "./do";
 import type { DiscordGateway } from "./gateway";
 
 export interface Env {
@@ -24,4 +24,6 @@ export interface Env {
   USER_RATE_LIMITER: DurableObjectNamespace<UserRateLimiter>;
   BUDGET_TRACKER: DurableObjectNamespace<BudgetTracker>;
   DISCORD_GATEWAY: DurableObjectNamespace<DiscordGateway>;
+  /** One instance per Discord channel; scopes "forget this channel" to that channel. */
+  CHANNEL_MEMORY: DurableObjectNamespace<ChannelMemory>;
 }

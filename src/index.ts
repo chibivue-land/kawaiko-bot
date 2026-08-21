@@ -3,7 +3,7 @@ import { postScheduledMutter } from "./mutter";
 import { postRandomReply } from "./replier";
 import { dispatchForHour, jstHour } from "./schedule";
 
-export { UserRateLimiter, BudgetTracker } from "./do";
+export { UserRateLimiter, BudgetTracker, ChannelMemory } from "./do";
 export { DiscordGateway } from "./gateway";
 
 /** Cron used purely as the gateway-connection watchdog. */

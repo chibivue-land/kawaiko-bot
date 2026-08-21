@@ -8,7 +8,9 @@ ubugeeei の過去の発言をもとにした人格 **kawaiko** が chibivue lan
   - 1 日数回、住処チャンネルにネタツイ風の呟きを投下する
   - 2 時間に 1 回くらい、住処チャンネルの誰かの発言に頼まれてもいないのにリプライする
   - 返事の生成中は「kawaiko が入力中…」が出る
+  - `@kawaiko reset` (または `リセット` / `忘れて`) で **そのチャンネルだけ** 記憶を捨てる
 - 最新情報が必要なら web 検索 (Google Search グラウンディング) して答える
+- 同じ言い回し・同じ分量に収束しないよう、生成のたびに「返しの型」と「長さ」を振り直し、直前の自分の発言との類似度を測って被ったら生成し直す
 
 ## アーキテクチャ
 
@@ -24,6 +26,8 @@ ubugeeei の過去の発言をもとにした人格 **kawaiko** が chibivue lan
 | ランダムリプ             | Cron (2 時間ごと × `REPLY_PROBABILITY`、[src/replier.ts](src/replier.ts))。住処チャンネルの直近 3 時間の人間の発言から 1 つ選んで絡む                                                                                                    |
 | ユーザーごとのレート制限 | Durable Objects (SQLite)。Discord ユーザー ID ごとに 5 回/時・20 回/日 (vars で変更可)                                                                                                                                                   |
 | 予算ガード               | Durable Objects で月次コストを概算し `MONTHLY_BUDGET_USD` (既定 $100) を超えたら生成停止                                                                                                                                                 |
+| 反復ガード               | [src/repetition.ts](src/repetition.ts) が直前の自分の発言との類似度 (文字 bigram の Dice 係数) を測り、被ったら生成をやり直す                                                                                                            |
+| チャンネル記憶           | Durable Object `ChannelMemory` (チャンネル ID ごとに 1 インスタンス)。`@kawaiko reset` の時刻を保持し、それ以前のログを無視する                                                                                                          |
 | CI/CD                    | GitHub Actions ([ci.yml](.github/workflows/ci.yml) / [deploy.yml](.github/workflows/deploy.yml))。main への push で自動デプロイ                                                                                                          |
 | 人格                     | [src/persona/ubugeeei.md](src/persona/ubugeeei.md) — 公開発言から観測した文体コーパス                                                                                                                                                    |
 | アイコン                 | [chibivue-land/art の kawaiko_funny.png](https://github.com/chibivue-land/art/blob/main/kawaiko_funny.png) を `vp run sync-avatar` で同期                                                                                                |
@@ -131,3 +135,13 @@ vp check
 - レート制限: `RATE_LIMIT_PER_HOUR` / `RATE_LIMIT_PER_DAY`
 - 人格の調整: [src/persona/ubugeeei.md](src/persona/ubugeeei.md) (コーパス) と [src/persona/index.ts](src/persona/index.ts) (ルール)
 - メンション応答はサーバーの任意のチャンネルで動く (bot が閲覧できれば)。呟きとランダムリプは `KAWAIKO_CHANNEL_ID` のみ
+
+### チャンネルが同じ返事を繰り返すとき
+
+kawaiko には会話 DB がなく、**チャンネルの直近ログそのものが記憶**である。そのため一度同じ型の返事が数回並ぶと、それが few-shot のお手本になって固定化しうる。対策は 3 段構え:
+
+1. トランスクリプトを組むとき、kawaiko 自身のよく似た発言は最新の 1 件だけ残す ([src/discord/transcript.ts](src/discord/transcript.ts))
+2. 生成のたびに「返しの型」と「長さ」を振り直す ([src/persona/index.ts](src/persona/index.ts) の `buildDeliveryBlock`)
+3. 出力が直近の自分の発言と似すぎていたら作り直す。3 回やっても同じならループ検知の定型文に逃げる ([src/ai/generate.ts](src/ai/generate.ts) の `generateVaried`)
+
+それでも詰まったら、そのチャンネルで `@kawaiko reset` と言えばリセットできる。リセットは `ChannelMemory` DO のチャンネル ID 単位なので、**他のチャンネルには一切影響しない**。認識するのは `reset` / `/reset` / `forget` / `リセット` / `記憶リセット` / `忘れて` など (完全一致、[src/commands.ts](src/commands.ts))。トークンを使わないのでレート制限・予算ガードより前に処理される。

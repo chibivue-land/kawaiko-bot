@@ -1,8 +1,9 @@
 import type { Env } from "./env";
-import { generate } from "./ai/generate";
+import { generateVaried } from "./ai/generate";
 import { fetchRecentMessages, postChannelMessage, withTyping } from "./discord/api";
-import { buildTranscript } from "./discord/transcript";
-import { buildSystemPrompt, jstNowLabel } from "./persona";
+import { buildTranscript, collectOwnLines, sinceReset } from "./discord/transcript";
+import { VARIETY_RULES, buildDeliveryBlock, buildSystemPrompt, jstNowLabel } from "./persona";
+import { AVOID_LIMIT, buildAvoidBlock } from "./repetition";
 import { shouldPost, type PostOutcome } from "./mutter";
 
 /** Only barge into messages newer than this. */
@@ -41,7 +42,12 @@ async function postReply(
   env: Env,
   budget: ReturnType<Env["BUDGET_TRACKER"]["get"]>,
 ): Promise<string | undefined> {
-  const messages = await fetchRecentMessages(env, env.KAWAIKO_CHANNEL_ID);
+  // Scoped to kawaiko's home channel only, so its reset marker is the one that applies.
+  const memory = env.CHANNEL_MEMORY.get(env.CHANNEL_MEMORY.idFromName(env.KAWAIKO_CHANNEL_ID));
+  const messages = sinceReset(
+    await fetchRecentMessages(env, env.KAWAIKO_CHANNEL_ID),
+    await memory.resetAt(),
+  );
   const now = Date.now();
   const appId = env.DISCORD_APPLICATION_ID;
   const candidates = messages.filter(
@@ -64,19 +70,29 @@ async function postReply(
     excludeId: target.id,
     limit: 8,
   });
+  // kawaiko's own recent lines: the list it must not echo.
+  const ownLines = collectOwnLines(messages, appId, AVOID_LIMIT);
 
   const { text, costUsd, model } = await withTyping(env, env.KAWAIKO_CHANNEL_ID, () =>
-    generate(env, {
-      system: buildSystemPrompt(),
-      prompt: `今は ${jstNowLabel()}。${transcript ? `チャンネルの直近の流れ:\n${transcript}\n\n` : ""}この中で ${displayName} さんのこの発言に注目した:
+    generateVaried(
+      env,
+      {
+        system: buildSystemPrompt(),
+        prompt: `今は ${jstNowLabel()}。${transcript ? `チャンネルの直近の流れ:\n${transcript}\n\n` : ""}この中で ${displayName} さんのこの発言に注目した:
 
 ${target.content}
 
-頼まれてもいないのに、この発言に突然リプライで絡んで。捻くれた辛口の茶々・ツッコミ・共感のどれか。1〜2 文で短く。相手を本気で傷つける個人攻撃はしない (からかいの範囲で)。`,
-      maxSearches: 0,
-      effort: "low",
-      maxTokens: 2048,
-    }),
+頼まれてもいないのに、この発言に突然リプライで絡んで。捻くれた辛口の茶々・ツッコミ・共感のどれか。相手を本気で傷つける個人攻撃はしない (からかいの範囲で)。${buildAvoidBlock(ownLines)}
+
+${buildDeliveryBlock()}
+
+${VARIETY_RULES}`,
+        maxSearches: 0,
+        effort: "low",
+        maxTokens: 2048,
+      },
+      ownLines,
+    ),
   );
 
   await budget.recordSpend(costUsd);

@@ -48,12 +48,18 @@
       { "name": "USER_RATE_LIMITER", "class_name": "UserRateLimiter" },
       { "name": "BUDGET_TRACKER", "class_name": "BudgetTracker" },
       { "name": "DISCORD_GATEWAY", "class_name": "DiscordGateway" },
+      // One instance per Discord channel: "@kawaiko reset" only clears that channel.
+      { "name": "CHANNEL_MEMORY", "class_name": "ChannelMemory" },
     ],
   },
   "migrations": [
     {
       "tag": "v1",
       "new_sqlite_classes": ["UserRateLimiter", "BudgetTracker", "DiscordGateway"],
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["ChannelMemory"],
     },
   ],
   // Secrets (register with `wrangler secret put`):
