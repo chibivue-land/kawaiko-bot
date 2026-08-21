@@ -3,6 +3,7 @@ import type { Env } from "./env";
 import { generate } from "./ai/generate";
 import { postChannelMessage, withTyping } from "./discord/api";
 import { isExplicitMention, stripBotMention } from "./discord/mention";
+import { gatherResearch, needsResearch } from "./research";
 import { buildSystemPrompt, jstNowLabel } from "./persona";
 import { BUDGET_EXCEEDED_LINES, ERROR_LINES, RATE_LIMITED_LINES, pickLine } from "./lines";
 
@@ -251,19 +252,29 @@ export class DiscordGateway extends DurableObject<Env> {
 
       const displayName =
         msg.member?.nick ?? msg.author.global_name ?? msg.author.username ?? "誰か";
-      const { text, costUsd, model } = await withTyping(this.env, msg.channel_id, () =>
-        generate(this.env, {
+      const question = stripBotMention(appId, content);
+      const { text, costUsd, model } = await withTyping(this.env, msg.channel_id, async () => {
+        // Question-like mentions get a quick DDG + Wikipedia lookup for grounding.
+        const research =
+          question && needsResearch(question) ? await gatherResearch(question).catch(() => "") : "";
+        const researchBlock = research
+          ? `
+
+参考情報 (web 検索結果の抜粋。鵜呑みにせず取捨選択して使う。関係ないものは無視):
+${research}`
+          : "";
+        return generate(this.env, {
           system: buildSystemPrompt(),
           prompt: `今は ${jstNowLabel()}。Discord で ${displayName} さんからメンションでこう話しかけられた:
 
-${stripBotMention(appId, content) || "(本文なし、メンションだけ)"}
+${question || "(本文なし、メンションだけ)"}${researchBlock}
 
-kawaiko として返事して。最新情報が必要そうなら web_search を使ってよい。`,
+kawaiko として返事して。問いかけには具体的に答える。知らないことを適当に断言しない。`,
           maxSearches: 0,
           effort: "low",
           maxTokens: 1024,
-        }),
-      );
+        });
+      });
       await budget.recordSpend(costUsd);
       await reply(text);
       await outcome(true, undefined, model);
