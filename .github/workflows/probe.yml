@@ -1,0 +1,37 @@
+# 絵の下ごしらえを覗く手動ジョブ。
+#
+# TRIGGER_TOKEN は GitHub Secrets にしか無いので、手元にトークンが無くても
+# 中身を見られるようにここから叩く。/draw は描くところまでやるが Discord へは
+# 出さないので、何度流しても静か。
+#
+# 覗き先を /draw から広げないこと。このリポジトリは公開で、Actions のログも
+# 公開される。/memory や /status は実在の人物についての観測や運用の中身を
+# 返すので、公開ログに流してよいものではない。
+name: Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      q:
+        description: "描かせるお題"
+        required: true
+        default: 鴨鍋
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Peek at the drawing pipeline
+        run: |
+          # 入力は run の中へ直接展開しない (provision.yml と同じ理由)。
+          curl -sS -G \
+            --data-urlencode "q=$Q" \
+            -H "Authorization: Bearer $TRIGGER_TOKEN" \
+            "https://kawaiko-bot.ubuge1122.workers.dev/draw" \
+            | jq .
+        env:
+          TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
+          Q: ${{ inputs.q }}
