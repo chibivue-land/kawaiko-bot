@@ -9,7 +9,7 @@ import type {
 import type { 発言 } from "../核/発言";
 import type { 事実, 学習した事実, 観測 } from "../核/記憶";
 import { Temporal } from "../核/時刻";
-import { 偽, 数値, 数学, 文字列, 真, 真偽 } from "../共通/型";
+import { 偽, 数値, 数学, 文字列, 未定義, 真, 真偽 } from "../共通/型";
 import type { 一部, 約束, 記録, 読み取り専用配列, 配列 } from "../共通/型";
 import { 末尾に足す, 長さ } from "../共通/関数";
 import { 各要素に } from "../共通/反復";
@@ -226,6 +226,16 @@ export function 偽の部品一式を作る(上書き?: 一部<部品一式>): �
     調査係: {
       async 調べる() {
         return "";
+      },
+    },
+
+    // 既定では「取りに行ったが読めなかった」．読ませたい検証だけ上書きする．
+    添付読み: {
+      async 文書を読む() {
+        return 未定義;
+      },
+      async 画像を取り込む() {
+        return 未定義;
       },
     },
 
