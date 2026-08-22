@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
         command: "vp build && wrangler deploy",
         cache: false,
       },
-      "アイコン同期": {
+      アイコン同期: {
         command: "node 道具/アイコン同期.ts",
         cache: false,
       },
