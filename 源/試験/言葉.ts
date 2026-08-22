@@ -124,7 +124,10 @@ function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定
     しくじる: (文) => {
       const 待ち = 否定するか ? expect(値).rejects.not : expect(値).rejects;
 
-      return (待ち as unknown as { toThrow: (文: 文字列) => 約束<無> }).toThrow(文);
+      // vitest が返すのは約束そのものではないので，一度約束に均してから返す．
+      return Promise.resolve(
+        (待ち as unknown as { toThrow: (文: 文字列) => PromiseLike<無> }).toThrow(文),
+      );
     },
     get 否() {
       return 判定を作る(値, 覚え書き, 否定(否定するか));
