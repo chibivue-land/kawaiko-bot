@@ -2,9 +2,21 @@ import type { チャット } from "../../振る舞い/接続口";
 import type { 発言 } from "../../核/発言";
 import type { 添付 } from "../../核/添付";
 import type { 環境 } from "../環境";
-import { 偽, 応答, 数値, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
-import type { 無, 省略可, 約束, 読み取り専用配列, 配列 } from "../../共通/型";
+import {
+  偽,
+  応答,
+  数値,
+  文字列,
+  新しい例外,
+  新しい塊,
+  新しい便,
+  未定義,
+  真偽,
+  空,
+} from "../../共通/型";
+import type { 無, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../../共通/型";
 import { 写す, 切り出す, 長さ } from "../../共通/関数";
+import { 各要素に, 範囲 } from "../../共通/反復";
 import { しくじる, もし, 試みる } from "../../共通/構文";
 import { 注意 } from "../../共通/記録";
 import { すぐ返す } from "../../共通/約束";
@@ -41,6 +53,31 @@ export function Discordのチャット(環境: 環境): チャット {
           ...(返信先の発言id ? { message_reference: { message_id: 返信先の発言id } } : {}),
         }),
       }).んで(() => 未定義);
+    },
+
+    /**
+     * 絵を 1 枚，一言を添えて出す．
+     *
+     * ここだけ JSON ではなく multipart — Discord に画像を渡す道はこれしかない．
+     * Content-Type は付けない．境界文字列は fetch が自分で決めるので，こちらが
+     * 書くと壊れる．
+     */
+    絵を投稿する(チャンネルid, 本文, 絵, 返信先の発言id): 約束<無> {
+      const 便 = 新しい便();
+
+      便.append(
+        "payload_json",
+        JSON.stringify({
+          content: 文字数を収める(本文),
+          allowed_mentions: { parse: [], replied_user: 偽 },
+          ...(返信先の発言id ? { message_reference: { message_id: 返信先の発言id } } : {}),
+        }),
+      );
+      便.append("files[0]", 塊にする(絵.中身, 絵.種別), 絵.名前);
+
+      return 呼ぶ(環境, `/channels/${チャンネルid}/messages`, { method: "POST", body: 便 }).んで(
+        () => 未定義,
+      );
     },
 
     直近の発言(チャンネルid, 上限 = 30): 約束<配列<発言>> {
@@ -83,15 +120,33 @@ export function Discordのチャット(環境: 環境): チャット {
   };
 }
 
+/** base64 の中身を，送り出せる塊に戻す． */
+function 塊にする(中身: 文字列, 種別: 文字列): Blob {
+  const 生 = atob(中身);
+  const バイト列 = new Uint8Array(長さ(生));
+
+  各要素に(範囲(0, 長さ(生)), (位置) => {
+    バイト列[位置] = 生.charCodeAt(位置);
+  });
+
+  return 新しい塊([バイト列], { type: 種別 });
+}
+
 function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答> {
-  return fetch(`${基点}${経路}`, {
-    ...設定,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bot ${環境.DISCORD_BOT_TOKEN}`,
-      ...設定.headers,
+  // multipart のときは Content-Type を付けない．境界文字列は fetch が決める．
+  const 見出し: 記録<文字列, 文字列> = {
+    Authorization: `Bot ${環境.DISCORD_BOT_TOKEN}`,
+    ...((設定.headers ?? {}) as 記録<文字列, 文字列>),
+  };
+
+  もし(設定.body instanceof FormData, {
+    であれば: () => 未定義,
+    でなければ: () => {
+      見出し["Content-Type"] = "application/json";
     },
-  }).んで((応答) =>
+  });
+
+  return fetch(`${基点}${経路}`, { ...設定, headers: 見出し }).んで((応答) =>
     もし(応答.ok, {
       であれば: () => すぐ返す(応答),
       でなければ: () =>

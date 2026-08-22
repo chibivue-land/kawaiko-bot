@@ -189,9 +189,14 @@ async function 実際に投げる(
   });
 }
 
-/** Workers AI を先に (1 日の無料枠)，Gemini を控えに． */
+/**
+ * Workers AI を先に (1 日の無料枠)，Gemini を控えに．
+ *
+ * 視覚モデルは安いものより後ろに置いてある．普段の雑談に 27B は要らない．
+ * 画像が添えられている回だけ，試す順に並べる が前へ出す．
+ */
 export const 既定のモデル一覧 =
-  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite";
+  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,@cf/qwen/qwen3.8-27b,gemini-3.5-flash-lite";
 
 export function モデル一覧を読む(設定: 文字列 | 未定義): 配列<文字列> {
   return 絞る(
