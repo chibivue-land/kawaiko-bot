@@ -1,4 +1,6 @@
 node_modules/
+成果物/
+# 旧い出力先．過去のビルドが残っていても拾わない．
 dist/
 .wrangler/
 .dev.vars

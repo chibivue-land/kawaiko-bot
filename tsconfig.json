@@ -9,8 +9,9 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "test", "scripts", "vite.config.ts"]
+  "include": ["源", "道具", "vite.config.ts", "drizzle.config.ts"]
 }
