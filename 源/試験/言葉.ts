@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { 偽, 数値, 文字列, 未定義 } from "../共通/型";
+import { 偽, 数値, 文字列, 未定義, 真偽 } from "../共通/型";
 import type { 不明, 無, 省略可, 約束, 記録 } from "../共通/型";
 import { 長さ } from "../共通/関数";
-import { より大きい, より小さい, 以上, 以下, 等しい } from "../共通/演算";
+import { より大きい, より小さい, 以上, 以下, 否定, 等しい } from "../共通/演算";
 import { しくじる } from "../共通/構文";
 
 /**
@@ -96,7 +96,7 @@ export function 期待(値: 不明, 覚え書き?: 省略可<文字列>): 判定
   return 判定を作る(値, 覚え書き, 偽);
 }
 
-function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定するか: boolean): 判定 {
+function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定するか: 真偽): 判定 {
   // biome/oxlint 的には any だが，vitest の matcher は値ごとに型が変わるので
   // ここで一度だけ緩める．外へ漏らさない．
   const 素 = 等しい(覚え書き, 未定義) ? expect(値) : expect(値, 覚え書き);
@@ -121,12 +121,13 @@ function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定
     呼ばれた: () => 的.toHaveBeenCalled!(),
     一度だけ呼ばれた: () => 的.toHaveBeenCalledOnce!(),
     呼ばれた回数が: (回数) => 的.toHaveBeenCalledTimes!(回数),
-    しくじる: async (文) => {
+    しくじる: (文) => {
       const 待ち = 否定するか ? expect(値).rejects.not : expect(値).rejects;
-      await (待ち as unknown as { toThrow: (文: 文字列) => 約束<無> }).toThrow(文);
+
+      return (待ち as unknown as { toThrow: (文: 文字列) => 約束<無> }).toThrow(文);
     },
     get 否() {
-      return 判定を作る(値, 覚え書き, !否定するか);
+      return 判定を作る(値, 覚え書き, 否定(否定するか));
     },
   };
 }
