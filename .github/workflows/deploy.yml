@@ -61,8 +61,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # 組み立ては Vite Task の依存として走る (キャッシュに当たれば復元だけ)。
-      # 配る 自体はキャッシュしない — 外へ出す副作用は使い回せない。
+      # 資格情報を渡さないところで組み立てる。環境変数も指紋に入るので、
+      # ここで渡すと CI が作った同じ組み立てから当たらなくなる。
+      - name: Build
+        run: vp run 組み立て
+
       - name: Deploy Worker
         run: vp run 配る
         env:

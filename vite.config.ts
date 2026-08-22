@@ -4,13 +4,21 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 /**
  * キャッシュの指紋に入れるもの．
  *
- * 基本は自動追跡 — 手で書いたグロブは必ずどこかでずれる．ただし
- * `node_modules/.modules.yaml` は除く．pnpm が install のたびに書き直す
- * メタデータで，中身が毎回変わるので，これが混ざっていると CI では**永久に
- * ヒットしない** (実際に一度そうなった)．依存そのものの変化は，同じ自動追跡が
- * 拾う依存のソースと，鍵に入れてある pnpm-lock.yaml が見ている．
+ * 基本は自動追跡 — 手で書いたグロブは必ずどこかでずれる．ただし，走るたびに
+ * 中身が変わるものは外す．混ざっていると CI では**永久にヒットしない**
+ * (実際に一度そうなった)．
+ *
+ *   node_modules/.modules.yaml  pnpm が install のたびに書き直すメタデータ
+ *   node_modules/.vite/**       vitest とタスクキャッシュ自身の置き場
+ *
+ * 依存そのものの変化は，同じ自動追跡が拾う依存のソースと，CI のキャッシュの鍵に
+ * 入れてある pnpm-lock.yaml が見ているので，外しても取りこぼさない．
  */
-const 読んだもの = [{ auto: true }, "!node_modules/.modules.yaml"] as const;
+const 読んだもの = [
+  { auto: true },
+  "!node_modules/.modules.yaml",
+  "!node_modules/.vite/**",
+] as const;
 
 export default defineConfig(({ mode }) => ({
   // vitest のときは workerd を挟まない — 単体テストは Node 上の純粋な関数を叩く．
@@ -29,7 +37,7 @@ export default defineConfig(({ mode }) => ({
   //
   // 結果はタスクキャッシュに入る (node_modules/.vite/task-cache)．鍵になるのは
   // 読んだファイルの中身なので，触っていないところは CI でも手元でも 2 度は
-  // 走らない．input を書かずに任せているのは，自動追跡のほうが正確だから．
+  // 走らない．指紋に何を入れるかは 読んだもの を見ること．
   run: {
     tasks: {
       確認: {
@@ -53,10 +61,13 @@ export default defineConfig(({ mode }) => ({
       },
 
       // 外へ出す 2 つは副作用があるので，結果を使い回さない．
-      // 配る が組み立てを自分でやらないのは，そこはキャッシュに任せたいため．
+      //
+      // 配る は組み立てを dependsOn に持たない．環境変数も指紋に入るので，
+      // Cloudflare の資格情報が居る手順の中で組み立てると，CI で作った同じ
+      // 組み立てから当たらなくなる．先に 組み立て を，資格情報の無いところで
+      // 済ませておくこと (デプロイのワークフローがそうしている)．
       配る: {
         command: "wrangler deploy",
-        dependsOn: ["組み立て"],
         cache: false,
       },
 
