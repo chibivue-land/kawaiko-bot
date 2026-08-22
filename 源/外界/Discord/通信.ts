@@ -1,8 +1,9 @@
 import type { チャット } from "../../振る舞い/接続口";
 import type { 発言 } from "../../核/発言";
+import type { 添付 } from "../../核/添付";
 import type { 環境 } from "../環境";
-import { 偽, 応答, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
-import type { 無, 省略可, 約束, 配列 } from "../../共通/型";
+import { 偽, 応答, 数値, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
+import type { 無, 省略可, 約束, 読み取り専用配列, 配列 } from "../../共通/型";
 import { 写す, 切り出す, 長さ } from "../../共通/関数";
 import { しくじる, もし, 試みる } from "../../共通/構文";
 import { 注意 } from "../../共通/記録";
@@ -112,12 +113,21 @@ interface 生の発言者 {
   global_name?: 省略可<文字列 | 空>;
 }
 
+/** Discord が添付 1 件について返してくるもの． */
+export interface 生の添付 {
+  filename?: 省略可<文字列>;
+  content_type?: 省略可<文字列 | 空>;
+  size?: 省略可<数値>;
+  url?: 省略可<文字列>;
+}
+
 interface 生の発言 {
   id: 文字列;
   content: 文字列;
   timestamp: 文字列;
   author: 生の発言者;
   member?: 省略可<{ nick?: 省略可<文字列 | 空> }>;
+  attachments?: 省略可<読み取り専用配列<生の添付>>;
 }
 
 /** ニックネーム > 表示名 > ユーザー名．Discord が実際に見せている順． */
@@ -133,5 +143,21 @@ function 発言に直す(生: 生の発言): 発言 {
     発言者id: 生.author.id,
     発言者名: 表示名(生.author, 生.member?.nick),
     bot発言か: 真偽(生.author.bot),
+    添付一覧: 添付に直す(生.attachments),
   };
+}
+
+/**
+ * Discord の添付を kawaiko の 添付 に正規化する．
+ *
+ * 名乗られない項目があっても落とさない — 名前も種別も分からない添付は
+ * 「見えないもの」として扱われるだけで，添えられた事実は残る．
+ */
+export function 添付に直す(生一覧: 省略可<読み取り専用配列<生の添付>>): 配列<添付> {
+  return 写す(生一覧 ?? [], (生) => ({
+    名前: 生.filename ?? "名前のわからないもの",
+    種別: 生.content_type ?? "application/octet-stream",
+    大きさ: 生.size ?? 0,
+    場所: 生.url ?? "",
+  }));
 }

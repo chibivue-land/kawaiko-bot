@@ -3,16 +3,18 @@ import { DurableObject } from "cloudflare:workers";
 import { 失敗を要約する } from "../../振る舞い/接続口";
 import { 名指しに返事する } from "../../振る舞い/返信";
 import { メンションを取り除く, 名指しされたか } from "../../核/発言";
+import { 添付の印 } from "../../核/添付";
 import { ISO時刻, エポックミリ秒, 現在時刻 } from "../../核/時刻";
 import { 定型文を選ぶ, 異常の文 } from "../../核/定型文";
 import { 部品を組み立てる } from "../組み立て";
-import { 表示名 } from "./通信";
+import { 添付に直す, 表示名 } from "./通信";
+import type { 生の添付 } from "./通信";
 import type { 環境 } from "../環境";
 
 import type { 部品一式 } from "../../振る舞い/接続口";
 import { 偽, 数値, 文字列, 未定義, 真, 真偽, 空 } from "../../共通/型";
-import type { 一部, 不明, 無, 省略可, 約束 } from "../../共通/型";
-import { 写す, 切り出す, 前後の空白を落とす, 空か, 長さ } from "../../共通/関数";
+import type { 一部, 不明, 無, 省略可, 約束, 読み取り専用配列 } from "../../共通/型";
+import { 写す, 切り出す, 前後の空白を落とす, 空か, 絞る, 繋ぐ, 長さ } from "../../共通/関数";
 import {
   ビット和,
   否定,
@@ -125,6 +127,8 @@ interface 発言が来た {
 
   /** 返信のときに入る．kawaiko への返信に反応するのに使う． */
   referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | 空>;
+
+  attachments?: 省略可<読み取り専用配列<生の添付>>;
 }
 
 export class Discord接続 extends DurableObject<環境> {
@@ -382,7 +386,15 @@ export class Discord接続 extends DurableObject<環境> {
     サーバーid: 文字列,
     自分の発言か: 真偽,
   ): 約束<無> {
-    const 本文 = 前後の空白を落とす(発言.content ?? "");
+    const 添付一覧 = 添付に直す(発言.attachments);
+    const 印 = 添付の印(添付一覧);
+    // 本文が空でも「画像を貼った」ことは残す価値がある．
+    const 本文 = 前後の空白を落とす(
+      繋ぐ(
+        絞る([前後の空白を落とす(発言.content ?? ""), 印], (かけら) => 否定(空か(かけら))),
+        " ",
+      ),
+    );
     const 積むか = 部品.観測するか && 部品.記憶庫.使えるか && 否定(空か(本文));
 
     return もし<約束<無>>(積むか, {
@@ -436,6 +448,7 @@ export class Discord接続 extends DurableObject<環境> {
           発言者id: 発言.author!.id,
           相手の名前: 表示名(発言.author!, 発言.member?.nick),
           本文: メンションを取り除く(自分のid, 本文),
+          添付一覧: 添付に直す(発言.attachments),
         }).んで((結末) =>
           this.状態を記録する({
             直前の名指し: {
