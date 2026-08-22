@@ -27,7 +27,7 @@ import {
 } from "../../共通/演算";
 import { もし, 場合分け, 振り分ける, 試す, 試みる } from "../../共通/構文";
 import { 注意, 異常, 記す } from "../../共通/記録";
-import { 何もしない } from "../../共通/約束";
+import { 何もしない, 約束にする } from "../../共通/約束";
 
 /**
  * Durable Object に住む Discord Gateway クライアント．
@@ -161,7 +161,7 @@ export class Discord接続 extends DurableObject<環境> {
   確かめる(): 約束<文字列> {
     return this.ctx.storage.setAlarm(足す(現在時刻().epochMilliseconds, 番犬の間隔)).んで(() =>
       もし<約束<文字列>>(this.開いているか, {
-        であれば: () => Promise.resolve("繋がっている"),
+        であれば: () => 約束にする("繋がっている"),
         でなければ: () => this.繋ぐ().んで(() => "繋いでいる"),
       }),
     );

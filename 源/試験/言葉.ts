@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { 偽, 数値, 文字列, 未定義, 真偽 } from "../共通/型";
-import type { 不明, 無, 省略可, 約束, 記録 } from "../共通/型";
+import type { 不明, 無, 省略可, 約束, 約束もどき, 記録 } from "../共通/型";
 import { 否定, 等しい } from "../共通/演算";
+import { 約束にする } from "../共通/約束";
 
 /**
  * テストの語彙．
@@ -123,8 +124,8 @@ function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定
       const 待ち = 否定するか ? expect(値).rejects.not : expect(値).rejects;
 
       // vitest が返すのは約束そのものではないので，一度約束に均してから返す．
-      return Promise.resolve(
-        (待ち as unknown as { toThrow: (文: 文字列) => PromiseLike<無> }).toThrow(文),
+      return 約束にする(
+        (待ち as unknown as { toThrow: (文: 文字列) => 約束もどき<無> }).toThrow(文),
       );
     },
     get 否() {

@@ -4,6 +4,7 @@ import type { 発話の結果, 発話器 } from "./接続口";
 import { 人格指示書を組み立てる } from "../核/人格";
 import { 受け流しの文, 反復打ち切りの文, 拒否の文, 無言の文 } from "../核/定型文";
 import { 新しい例外, 真 } from "../共通/型";
+import type { 約束 } from "../共通/型";
 
 const 指示書 = "なんらかの指示書";
 
@@ -11,7 +12,7 @@ function 発話器を作る(...返事一覧: (Partial<発話の結果> | Error)[
   let 番号 = 0;
   const 自身 = {
     回数: 0,
-    async 発話する(): Promise<発話の結果> {
+    async 発話する(): 約束<発話の結果> {
       自身.回数++;
       const 返事 = 返事一覧[Math.min(番号, 返事一覧.length - 1)];
       番号++;
