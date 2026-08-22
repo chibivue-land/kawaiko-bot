@@ -15,7 +15,7 @@ import { リセット後に絞る, 会話ログを組み立てる, 自分の直�
 import { リセットの文, 予算超過の文, 利用制限の文, 定型文を選ぶ } from "../核/定型文";
 import { 文字列 } from "../共通/型";
 import type { 無, 約束 } from "../共通/型";
-import { 否定, 条件 } from "../共通/演算";
+import { 否定 } from "../共通/演算";
 import { 振り分ける } from "../共通/構文";
 
 /** kawaiko 宛ての発言．ゲートウェイの生の payload から正規化したもの． */

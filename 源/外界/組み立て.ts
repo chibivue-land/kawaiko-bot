@@ -10,7 +10,6 @@ import { webの調査係 } from "./調査";
 import { 月の予算ドル, type 環境 } from "./環境";
 import { 数値, 数学, 未定義 } from "../共通/型";
 import { 等しくない } from "../共通/演算";
-import { 異常 } from "../共通/記録";
 
 /**
  * 組み立ての場所 — バインディングを入れて，ポートを出す．

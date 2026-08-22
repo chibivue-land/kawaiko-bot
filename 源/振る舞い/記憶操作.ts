@@ -9,7 +9,6 @@ import { 偽, 数値, 文字列, 真, 真偽 } from "../共通/型";
 import type { 不明, 省略可, 約束 } from "../共通/型";
 import { 否定 } from "../共通/演算";
 import { もし, 場合分け } from "../共通/構文";
-import { 異常 } from "../共通/記録";
 
 export type 記憶への問い =
   | { 種別: "サーバー一覧" }

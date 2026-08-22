@@ -1,8 +1,7 @@
 import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { リセット後に絞る, 会話ログを組み立てる, 自分の直近発言を集める } from "./転記";
 import type { 発言 } from "./発言";
-import { 長さ } from "../共通/関数";
-import { より小さい, 等しい } from "../共通/演算";
+import { 等しい } from "../共通/演算";
 
 const 自分のid = "bot-1";
 

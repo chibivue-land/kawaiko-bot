@@ -8,7 +8,7 @@ import type { 発言 } from "./発言";
 import { 反復しているか } from "./反復";
 import { エポックミリ秒 } from "./時刻";
 import { 偽, 数値, 文字列, 真 } from "../共通/型";
-import type { 記録, 読み取り専用配列, 配列 } from "../共通/型";
+import type { 読み取り専用配列, 配列 } from "../共通/型";
 import {
   写す,
   切り出す,

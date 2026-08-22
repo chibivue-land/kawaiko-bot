@@ -4,7 +4,6 @@ import { 学習に要る観測数 } from "../核/学習";
 import type { 観測 } from "../核/記憶";
 import { 偽の発話器を作る, 偽の記憶庫を作る, 偽の部品一式を作る } from "../試験/偽物";
 import { 偽, 新しい例外, 未定義, 真 } from "../共通/型";
-import { 異常 } from "../共通/記録";
 
 function 観測の窓(件数: number): 観測[] {
   return Array.from({ length: 件数 }, (_, i) => ({

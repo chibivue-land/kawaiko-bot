@@ -24,9 +24,8 @@ import {
 } from "./共通/型";
 import type { 不明, 無, 省略可, 約束, 記録 } from "./共通/型";
 import { 切り出す, 始まるか, 小数で書く, 空か, 長さ } from "./共通/関数";
-import { 否定, 条件, 等しい, 等しくない } from "./共通/演算";
+import { 否定, 等しい, 等しくない } from "./共通/演算";
 import { もし, 振り分ける } from "./共通/構文";
-import { 異常 } from "./共通/記録";
 
 export { 利用制限帳 } from "./外界/永続体/利用制限";
 export { 予算帳 } from "./外界/永続体/予算";

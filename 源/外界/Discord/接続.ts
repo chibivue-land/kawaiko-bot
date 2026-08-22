@@ -10,14 +10,13 @@ import { 表示名 } from "./通信";
 import type { 環境 } from "../環境";
 
 import type { 部品一式 } from "../../振る舞い/接続口";
-import { 偽, 応答, 数値, 文字列, 未定義, 真, 真偽, 空 } from "../../共通/型";
+import { 偽, 数値, 文字列, 未定義, 真, 真偽, 空 } from "../../共通/型";
 import type { 一部, 不明, 無, 省略可, 約束 } from "../../共通/型";
-import { 写す, 切り出す, 前後の空白を落とす, 畳む, 空か, 繋ぐ, 長さ } from "../../共通/関数";
+import { 写す, 切り出す, 前後の空白を落とす, 空か, 長さ } from "../../共通/関数";
 import {
   ビット和,
   否定,
   左へずらす,
-  条件,
   等しい,
   等しくない,
   より小さい,
@@ -150,7 +149,7 @@ export class Discord接続 extends DurableObject<環境> {
 
   private 状態を記録する(差分: 一部<接続の状態>): 約束<無> {
     return this.保存済みの状態().んで((保存済み) =>
-      this.ctx.storage.put("status", { ...(保存済み ?? {}), ...差分 }),
+      this.ctx.storage.put("status", { ...保存済み, ...差分 }),
     );
   }
 

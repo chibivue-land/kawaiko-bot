@@ -10,7 +10,6 @@ import 定型文 from "./定型文.json";
 import { 数値, 数学, 文字列 } from "../共通/型";
 import type { 省略可, 読み取り専用配列 } from "../共通/型";
 import { 長さ } from "../共通/関数";
-import { 異常 } from "../共通/記録";
 
 export const 利用制限の文: 読み取り専用配列<文字列> = 定型文.利用制限;
 

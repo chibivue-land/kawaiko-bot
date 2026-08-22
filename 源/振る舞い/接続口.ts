@@ -14,7 +14,6 @@ import { 例外, 数値, 文字列, 真偽 } from "../共通/型";
 import type { 不明, 無, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../共通/型";
 import { 前後の空白を落とす } from "../共通/関数";
 import { もし, 試す } from "../共通/構文";
-import { 異常 } from "../共通/記録";
 
 export type 思考の深さ = "low" | "medium" | "high";
 

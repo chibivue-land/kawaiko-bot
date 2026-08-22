@@ -1,7 +1,7 @@
 import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { その時刻の担当, 日本時間の時, 日本時間の表示, 独言の時刻 } from "./予定";
 import { Temporal } from "./時刻";
-import { 以上, 等しい } from "../共通/演算";
+import { 等しい } from "../共通/演算";
 
 const 時点 = (iso: string) => Temporal.Instant.from(iso);
 

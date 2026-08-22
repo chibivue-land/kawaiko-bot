@@ -20,7 +20,7 @@ import type { 観測 } from "../核/記憶";
 import { 偽, 文字列, 未定義, 真, 真偽 } from "../共通/型";
 import type { 省略可, 約束, 読み取り専用配列 } from "../共通/型";
 import { 小数で書く, 空か, 長さ } from "../共通/関数";
-import { より小さい, 否定, 条件 } from "../共通/演算";
+import { より小さい, 否定 } from "../共通/演算";
 import { もし, 振り分ける, 試みる } from "../共通/構文";
 import { 順に畳む } from "../共通/反復";
 import { 注意, 異常, 記す } from "../共通/記録";

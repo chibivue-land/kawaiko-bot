@@ -8,7 +8,6 @@ import type { 一部, 無, 省略可, 約束, 記録 } from "../../共通/型";
 import { より大きい, より小さい, 足す } from "../../共通/演算";
 import { もし } from "../../共通/構文";
 import { 各要素に } from "../../共通/反復";
-import { 異常 } from "../../共通/記録";
 
 export interface 仕事の記録 {
   時刻: 文字列;
