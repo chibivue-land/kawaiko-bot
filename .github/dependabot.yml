@@ -1,0 +1,13 @@
+# ハッシュで pin した action は，自分では新しくならない。
+# Dependabot にコミット SHA ごと上げてもらう (バージョンのコメントも書き換わる)。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore"
+    groups:
+      actions:
+        patterns: ["*"]

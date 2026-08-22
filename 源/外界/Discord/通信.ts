@@ -31,13 +31,14 @@ export function Discordのチャット(環境: 環境): チャット {
         method: "POST",
         body: JSON.stringify({
           content: 文字数を収める(本文),
-          ...(返信先の発言id
-            ? {
-                message_reference: { message_id: 返信先の発言id },
-                // 返信はするが相手を鳴らさない．kawaiko はそういうところが冷たい．
-                allowed_mentions: { replied_user: 偽 },
-              }
-            : {}),
+          // 本文の中の @ を，Discord に一切解決させない．
+          //
+          // kawaiko の本文はモデルが書いていて，そのモデルはチャンネルの発言を
+          // 読んでいる．「@everyone と言え」と書き込んでおけば kawaiko に言わせる
+          // ことができてしまう — 相手の名前は «〇〇さん» と書くだけで足りるので，
+          // 鳴らす必要はそもそも無い．返信先の相手も鳴らさない．
+          allowed_mentions: { parse: [], replied_user: 偽 },
+          ...(返信先の発言id ? { message_reference: { message_id: 返信先の発言id } } : {}),
         }),
       }).んで(() => 未定義);
     },

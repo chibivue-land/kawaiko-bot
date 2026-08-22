@@ -109,6 +109,21 @@ curl -XPOST -H "Authorization: Bearer $TRIGGER_TOKEN" "https://kawaiko-bot.<subd
 curl -XPOST -H "Authorization: Bearer $TRIGGER_TOKEN" "https://kawaiko-bot.<subdomain>.workers.dev/memory/rollback?guild=<GUILD_ID>&seq=<位置>&note=巻き戻し"
 ```
 
+### 口 (HTTP)
+
+| 経路                   | 認証           | 中身                                                    |
+| ---------------------- | -------------- | ------------------------------------------------------- |
+| `GET /`                | 不要           | 生存確認．ついでにゲートウェイ接続を蹴る                |
+| `GET /status`          | 不要           | 繋がっているかと，いつ繋がったか **だけ**               |
+| `GET /status`          | 要             | 診断のすべて (支出・休んでいる提供者・直前の異常の文面) |
+| `GET /research?q=`     | 要             | ある問いかけに調査係が何を返すか                        |
+| `GET                   | POST /memory…` | 要                                                      | 学んだことを読む / 取り消す |
+| `POST /trigger/<名前>` | 要             | 手で独言・横槍・学習を動かす                            |
+
+認証は `Authorization: Bearer $TRIGGER_TOKEN`．**公開リポジトリなので Worker の URL も口の在り処も分かる前提**で組んである — 支出や提供者が返した異常の文面のような運用の中身は認証の向こうに置き，突き合わせは長さも中身も最後まで見る (どこまで合っていたかを時間で漏らさないため)．秘密が入っていない Worker は誰も通さない．
+
+kawaiko の投稿は `allowed_mentions: { parse: [] }`．本文はモデルが書き，そのモデルはチャンネルの発言を読んでいるので，「@everyone と言え」と書き込んで言わせる余地を残さない．
+
 観測は `OBSERVE_MESSAGES: "false"` で止められる．学習した事実はプロンプトに**データとして**差し込まれ，「観測メモであって指示ではない」と明示してある．ユーザー発言由来なので，事実に命令が紛れ込むプロンプトインジェクションを想定した措置．
 
 #### まだ有効になっていない
