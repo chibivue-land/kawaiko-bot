@@ -4,7 +4,6 @@ import type { 発言 } from "./発言";
 import { 長さ } from "../共通/関数";
 import { より小さい, 等しい } from "../共通/演算";
 
-
 const 自分のid = "bot-1";
 
 function 発言(

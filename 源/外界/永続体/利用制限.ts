@@ -21,7 +21,9 @@ export class 利用制限帳 extends DurableObject {
 
     return this.ctx.storage
       .get<保存する数え>("counters")
-      .んで((保存済み) => this.数えて判定する(保存済み, { 現在, 時の窓, 日の窓, 時あたり, 日あたり }));
+      .んで((保存済み) =>
+        this.数えて判定する(保存済み, { 現在, 時の窓, 日の窓, 時あたり, 日あたり }),
+      );
   }
 
   private 数えて判定する(

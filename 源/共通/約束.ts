@@ -1,5 +1,5 @@
-import type { 文字列, 不明, 無 } from "./型";
-import { 真, 偽 } from "./型";
+import type { 文字列, 不明, 無, 約束 } from "./型";
+import { 真, 偽, 未定義 } from "./型";
 
 /**
  * 約束の続きを日本語で書けるようにする．
@@ -42,6 +42,16 @@ const 足す = (名前: 文字列, 元: 不明): 無 => {
 足す("んで", Promise.prototype.then);
 足す("しくじったら", Promise.prototype.catch);
 足す("ともかく", Promise.prototype.finally);
+
+/**
+ * 何もしない約束．
+ *
+ * もし や 場合分け の枝は式なので，「この枝ではやることが無い」も値で言う必要が
+ * ある．`async () => {}` と書くより，何もしないと名前で言ったほうが読める．
+ */
+export function 何もしない(): 約束<無> {
+  return Promise.resolve(未定義);
+}
 
 /**
  * thenable を約束にする．
