@@ -5,7 +5,7 @@ import { 月キー } from "../AI/料金";
 import { ISO時刻 } from "../../核/時刻";
 import { 数値, 文字列, 未定義, 真偽 } from "../../共通/型";
 import type { 一部, 無, 省略可, 約束, 記録 } from "../../共通/型";
-import { より大きい } from "../../共通/演算";
+import { より大きい, より小さい, 足す } from "../../共通/演算";
 import { もし } from "../../共通/構文";
 import { 各要素に } from "../../共通/反復";
 import { 異常 } from "../../共通/記録";
@@ -59,14 +59,20 @@ export class 予算帳 extends DurableObject {
     );
   }
 
-  async 予算を確認する(上限ドル: 数値): 約束<{ 許すか: 真偽; 使用済みドル: 数値 }> {
-    const 使用済みドル = (await this.ctx.storage.get<数値>(`spent:${月キー()}`)) ?? 0;
-    return { 許すか: 使用済みドル < 上限ドル, 使用済みドル };
+  予算を確認する(上限ドル: 数値): 約束<{ 許すか: 真偽; 使用済みドル: 数値 }> {
+    return this.ctx.storage.get<数値>(`spent:${月キー()}`).んで((保存済み) => {
+      const 使用済みドル = 保存済み ?? 0;
+
+      return { 許すか: より小さい(使用済みドル, 上限ドル), 使用済みドル };
+    });
   }
 
-  async 支出を記録する(費用ドル: 数値): 約束<無> {
+  支出を記録する(費用ドル: 数値): 約束<無> {
     const 鍵 = `spent:${月キー()}`;
-    await this.ctx.storage.put(鍵, ((await this.ctx.storage.get<数値>(鍵)) ?? 0) + 費用ドル);
+
+    return this.ctx.storage
+      .get<数値>(鍵)
+      .んで((保存済み) => this.ctx.storage.put(鍵, 足す(保存済み ?? 0, 費用ドル)));
   }
 }
 

@@ -14,13 +14,12 @@ import type { 約束 } from "../../共通/型";
  */
 export class チャンネル記録帳 extends DurableObject {
   /** `時刻` (エポックミリ秒) より前を無視する． */
-  async リセットする(時刻: 数値 = 現在時刻().epochMilliseconds): 約束<数値> {
-    await this.ctx.storage.put("resetAt", 時刻);
-    return 時刻;
+  リセットする(時刻: 数値 = 現在時刻().epochMilliseconds): 約束<数値> {
+    return this.ctx.storage.put("resetAt", 時刻).んで(() => 時刻);
   }
 
   /** このチャンネルの履歴を無視する境界 (0 なら未リセット)． */
-  async リセット時刻(): 約束<数値> {
-    return (await this.ctx.storage.get<数値>("resetAt")) ?? 0;
+  リセット時刻(): 約束<数値> {
+    return this.ctx.storage.get<数値>("resetAt").んで((時刻) => 時刻 ?? 0);
   }
 }

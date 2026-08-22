@@ -16,8 +16,8 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
   return {
     名前: "workers-ai",
     受け持つか: (モデル) => モデル.startsWith("@cf/"),
-    async 実行する(モデル: 文字列, 依頼: 発話の依頼): 約束<発話の結果> {
-      const 応答 = await 実行(モデル, {
+    実行する(モデル: 文字列, 依頼: 発話の依頼): 約束<発話の結果> {
+      return 実行(モデル, {
         messages: [
           { role: "system", content: 依頼.指示書 },
           { role: "user", content: 依頼.指示文 },
@@ -27,19 +27,20 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
         // reasoning_effort (呼び出し側の「深さ」に対応) を見る．
         reasoning_effort: 依頼.深さ ?? "low",
         chat_template_kwargs: { enable_thinking: 偽 },
-      });
+      }).んで((応答) => {
+        const 費用ドル = 概算費用ドル(モデル, {
+          total_input_tokens: 応答.usage?.prompt_tokens ?? 0,
+          total_output_tokens: 応答.usage?.completion_tokens ?? 0,
+        });
+        // 切り替えが効かなかったときのために，漏れた思考ブロックを落とす．
+        const 生 = 応答.choices?.[0]?.message?.content ?? 応答.response ?? "";
 
-      const 費用ドル = 概算費用ドル(モデル, {
-        total_input_tokens: 応答.usage?.prompt_tokens ?? 0,
-        total_output_tokens: 応答.usage?.completion_tokens ?? 0,
+        return {
+          本文: 前後の空白を落とす(置き換える(生, /<think>[\s\S]*?<\/think>/g, "")),
+          費用ドル,
+          モデル,
+        };
       });
-      // 切り替えが効かなかったときのために，漏れた思考ブロックを落とす．
-      const 生 = 応答.choices?.[0]?.message?.content ?? 応答.response ?? "";
-      return {
-        本文: 前後の空白を落とす(置き換える(生, /<think>[\s\S]*?<\/think>/g, "")),
-        費用ドル,
-        モデル,
-      };
     },
   };
 }
