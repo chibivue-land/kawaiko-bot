@@ -1,6 +1,7 @@
 import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { その時刻の担当, 日本時間の時, 日本時間の表示, 独言の時刻 } from "./予定";
 import { Temporal } from "./時刻";
+import { 等しい } from "../共通/演算";
 
 const 時点 = (iso: string) => Temporal.Instant.from(iso);
 
@@ -29,9 +30,9 @@ const 時点 = (iso: string) => Temporal.Instant.from(iso);
 
   検証("1 日を 3 つの仕事へ配る", () => {
     const 担当一覧 = [...Array(24).keys()].map(その時刻の担当);
-    期待(担当一覧.filter((担当) => 担当 === "独言")).の長さが(4);
-    期待(担当一覧.filter((担当) => 担当 === "横槍").length).以上(10);
-    期待(担当一覧.filter((担当) => 担当 === "学習").length).以上(8);
+    期待(担当一覧.filter((担当) => 等しい(担当, "独言"))).の長さが(4);
+    期待(担当一覧.filter((担当) => 等しい(担当, "横槍")).length).以上(10);
+    期待(担当一覧.filter((担当) => 等しい(担当, "学習")).length).以上(8);
   });
 });
 

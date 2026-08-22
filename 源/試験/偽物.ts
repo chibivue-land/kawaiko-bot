@@ -2,11 +2,10 @@ import type { チャット, 発話の結果, 発話器, 記憶庫, 部品一式 
 import type { 発言 } from "../核/発言";
 import type { 事実, 学習した事実, 観測 } from "../核/記憶";
 import { Temporal } from "../核/時刻";
-
-import { 数学 } from "../共通/型";
-import type { 文字列, 数値, 真偽, 配列, 約束, 読み取り専用配列, 一部 } from "../共通/型";
-import { 各要素に } from "../共通/反復";
+import { 数値, 数学, 文字列, 真偽 } from "../共通/型";
+import type { 一部, 約束, 読み取り専用配列, 配列 } from "../共通/型";
 import { 末尾に足す, 長さ } from "../共通/関数";
+import { 各要素に } from "../共通/反復";
 
 /**
  * ポートすべての，記憶上の身代わり．

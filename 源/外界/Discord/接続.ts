@@ -9,14 +9,13 @@ import { 部品を組み立てる } from "../組み立て";
 import { 表示名 } from "./通信";
 import type { 環境 } from "../環境";
 
-import { 文字列 } from "../../共通/型";
-import { 切り出す, 前後の空白を落とす, 写す, 空か, 長さ } from "../../共通/関数";
-import { もし, 場合分け, 試す, 試みる } from "../../共通/構文";
-import { 記す, 注意, 異常 } from "../../共通/記録";
-import type { 数値, 真偽, 無, 約束, 一部, 省略可, 不明 } from "../../共通/型";
 import type { 部品一式 } from "../../振る舞い/接続口";
-import { 否定 } from "../../共通/演算";
-import { 振り分ける } from "../../共通/構文";
+import { 数値, 文字列, 未定義, 真偽, 空 } from "../../共通/型";
+import type { 一部, 不明, 無, 省略可, 約束 } from "../../共通/型";
+import { 写す, 切り出す, 前後の空白を落とす, 空か, 長さ } from "../../共通/関数";
+import { 否定, 等しい, 等しくない } from "../../共通/演算";
+import { もし, 場合分け, 振り分ける, 試す, 試みる } from "../../共通/構文";
+import { 注意, 異常, 記す } from "../../共通/記録";
 
 /**
  * Durable Object に住む Discord Gateway クライアント．
@@ -58,9 +57,9 @@ const 名乗りの間隔 = 30_000;
 interface 届いた包み {
   op: 数値;
 
-  t?: 省略可<文字列 | null>;
+  t?: 省略可<文字列 | 空>;
 
-  s?: 省略可<数値 | null>;
+  s?: 省略可<数値 | 空>;
 
   d?: 省略可<不明>;
 }
@@ -105,21 +104,21 @@ interface 発言が来た {
 
     username?: 省略可<文字列>;
 
-    global_name?: 省略可<文字列 | null>;
+    global_name?: 省略可<文字列 | 空>;
   }>;
-  member?: 省略可<{ nick?: 省略可<文字列 | null> }>;
+  member?: 省略可<{ nick?: 省略可<文字列 | 空> }>;
 
   mentions?: 省略可<Array<{ id: 文字列 }>>;
 
   /** 返信のときに入る．kawaiko への返信に反応するのに使う． */
-  referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | null>;
+  referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | 空>;
 }
 
 export class Discord接続 extends DurableObject<環境> {
-  private ws: WebSocket | null = null;
+  private ws: WebSocket | 空 = 空;
   private 開いているか = false;
-  private 連番: 数値 | null = null;
-  private 心拍の時計: ReturnType<typeof setInterval> | null = null;
+  private 連番: 数値 | 空 = 空;
+  private 心拍の時計: ReturnType<typeof setInterval> | 空 = 空;
   private 応答待ちか = false;
   private 直前の名乗り = 0;
 
@@ -170,7 +169,7 @@ export class Discord接続 extends DurableObject<環境> {
     const 応答 = await fetch(ゲートウェイのURL, { headers: { Upgrade: "websocket" } });
     const ws = 応答.webSocket;
 
-    return もし(ws === null, {
+    return もし(等しい(ws, 空), {
       であれば: async () => 異常(`接続: upgrade に失敗 (${応答.status})`),
       でなければ: async () => this.socketを受け取る(ws!),
     });
@@ -200,21 +199,21 @@ export class Discord接続 extends DurableObject<環境> {
   }
 
   private 畳む(): 無 {
-    もし(this.心拍の時計 !== null, {
+    もし(等しくない(this.心拍の時計, 空), {
       であれば: () => {
         clearInterval(this.心拍の時計!);
-        this.心拍の時計 = null;
+        this.心拍の時計 = 空;
       },
-      でなければ: () => undefined,
+      でなければ: () => 未定義,
     });
 
     試す({
       実行: () => this.ws?.close(1000, "繋ぎ直す"),
       // もう閉じている．
-      しくじったら: () => undefined,
+      しくじったら: () => 未定義,
     });
 
-    this.ws = null;
+    this.ws = 空;
     this.開いているか = false;
     this.応答待ちか = false;
   }
@@ -226,21 +225,21 @@ export class Discord接続 extends DurableObject<環境> {
   private async 包みを捌く(生: 文字列): 約束<無> {
     const 中身 = await 試みる<省略可<届いた包み>>({
       実行: async () => JSON.parse(生) as 届いた包み,
-      しくじったら: () => undefined,
+      しくじったら: () => 未定義,
     });
 
-    return もし(中身 === undefined, {
+    return もし(等しい(中身, 未定義), {
       であれば: async () => {},
       でなければ: () => this.命令を捌く(中身!),
     });
   }
 
   private async 命令を捌く(中身: 届いた包み): 約束<無> {
-    もし(typeof 中身.s === "number", {
+    もし(等しい(typeof 中身.s, "number"), {
       であれば: () => {
         this.連番 = 中身.s as 数値;
       },
-      でなければ: () => undefined,
+      でなければ: () => 未定義,
     });
 
     return 場合分け(文字列(中身.op), {
@@ -272,8 +271,8 @@ export class Discord接続 extends DurableObject<環境> {
 
         await this.状態を記録する({
           準備できた時刻: ISO時刻(),
-          bot利用者: 準備.user ? { id: 準備.user.id, username: 準備.user.username } : undefined,
-          サーバー数: 準備.guilds ? 長さ(準備.guilds) : undefined,
+          bot利用者: 準備.user ? { id: 準備.user.id, username: 準備.user.username } : 未定義,
+          サーバー数: 準備.guilds ? 長さ(準備.guilds) : 未定義,
         });
       },
       MESSAGE_CREATE: async () => {
@@ -284,9 +283,9 @@ export class Discord接続 extends DurableObject<環境> {
   }
 
   private 心拍を始める(間隔ミリ秒: 数値): 無 {
-    もし(this.心拍の時計 !== null, {
+    もし(等しくない(this.心拍の時計, 空), {
       であれば: () => clearInterval(this.心拍の時計!),
-      でなければ: () => undefined,
+      でなければ: () => 未定義,
     });
 
     this.応答待ちか = false;
@@ -324,13 +323,13 @@ export class Discord接続 extends DurableObject<環境> {
     const 自分のid = 部品.自分のid;
     const サーバーid = 発言.guild_id;
     const 発言者 = 発言.author;
-    const 自分の発言か = 発言者?.id === 自分のid;
+    const 自分の発言か = 等しい(発言者?.id, 自分のid);
 
     return 振り分ける<無>(
       [
         // サーバー内の発言だけ (DM は受けない)．他所の bot は雑音．
-        { 条件: () => 発言者 === undefined, ならば: async () => {} },
-        { 条件: () => サーバーid === undefined, ならば: async () => {} },
+        { 条件: () => 等しい(発言者, 未定義), ならば: async () => {} },
+        { 条件: () => 等しい(サーバーid, 未定義), ならば: async () => {} },
         { 条件: () => 発言者!.bot && 否定(自分の発言か), ならば: async () => {} },
       ],
       {
@@ -362,7 +361,7 @@ export class Discord接続 extends DurableObject<環境> {
       であれば: async () => {
         // Discord 自身の時刻を使い，読めなければ手元の時計．
         const 時刻 =
-          (発言.timestamp ? エポックミリ秒(発言.timestamp) : undefined) ??
+          (発言.timestamp ? エポックミリ秒(発言.timestamp) : 未定義) ??
           現在時刻().epochMilliseconds;
 
         await 部品.記憶庫.観測する([
@@ -386,8 +385,8 @@ export class Discord接続 extends DurableObject<環境> {
   private async 名指しなら答える(部品: 部品一式, 発言: 発言が来た, サーバーid: 文字列): 約束<無> {
     const 自分のid = 部品.自分のid;
     const 本文 = 発言.content ?? "";
-    const 自分への返信か = 発言.referenced_message?.author?.id === 自分のid;
-    const 言及されたid一覧 = 発言.mentions ? 写す(発言.mentions, (言及) => 言及.id) : undefined;
+    const 自分への返信か = 等しい(発言.referenced_message?.author?.id, 自分のid);
+    const 言及されたid一覧 = 発言.mentions ? 写す(発言.mentions, (言及) => 言及.id) : 未定義;
     const 応じるか = 自分への返信か || 名指しされたか(自分のid, 本文, 言及されたid一覧);
 
     return もし(応じるか, {
@@ -415,7 +414,9 @@ export class Discord接続 extends DurableObject<環境> {
           直前の名指し: {
             時刻: ISO時刻(),
             成功か: true,
-            モデル: 結末.種別 === "返事した" ? 結末.モデル : undefined,
+            // 判別可能ユニオンの絞り込みは，プロパティ経由の型述語では効かない．
+            // ここは素の === でないと 結末.モデル が見えない．
+            モデル: 結末.種別 === "返事した" ? 結末.モデル : 未定義,
           },
         });
       },
@@ -428,7 +429,7 @@ export class Discord接続 extends DurableObject<環境> {
         await 試みる<無>({
           実行: () => 部品.チャット.投稿する(発言.channel_id, 定型文を選ぶ(異常の文), 発言.id),
           // 静かに諦める．
-          しくじったら: () => undefined,
+          しくじったら: () => 未定義,
         });
       },
     });

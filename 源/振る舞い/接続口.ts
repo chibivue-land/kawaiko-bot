@@ -10,20 +10,10 @@ import type { 発言 } from "../核/発言";
 import type { 担当 } from "../核/予定";
 import type { Temporal } from "../核/時刻";
 import type { 取り込み結果, 学習の回, 学習した事実, 事実, 観測, 観測の入力 } from "../核/記憶";
-import { もし, 試す } from "../共通/構文";
+import { 例外, 数値, 文字列, 真偽 } from "../共通/型";
+import type { 不明, 無, 省略可, 約束, 読み取り専用配列, 配列 } from "../共通/型";
 import { 前後の空白を落とす } from "../共通/関数";
-import { 例外, 文字列 as 文字列に直す } from "../共通/型";
-import type {
-  文字列,
-  数値,
-  真偽,
-  無,
-  約束,
-  配列,
-  読み取り専用配列,
-  省略可,
-  不明,
-} from "../共通/型";
+import { もし, 試す } from "../共通/構文";
 
 export type 思考の深さ = "low" | "medium" | "high";
 
@@ -195,7 +185,7 @@ export function 失敗を要約する(躓き: 不明): 文字列 {
     でなければ: () =>
       試す({
         実行: () => JSON.stringify(躓き),
-        しくじったら: () => 文字列に直す(躓き),
+        しくじったら: () => 文字列(躓き),
       }),
   });
 }

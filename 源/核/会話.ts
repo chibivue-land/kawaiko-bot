@@ -5,12 +5,13 @@
  * 両者で共通するもの (会話ログ・記憶・回避一覧・抑揚) は 指示文.ts から来る．
  * ここに置くのは，その 2 つの状況を分ける指示だけ．
  */
-import { 前後の空白を落とす, 空か, 繋ぐ } from "../共通/関数";
-import type { 文字列, 数値, 読み取り専用配列, 省略可 } from "../共通/型";
 import type { 事実 } from "./記憶";
 import { 回避節, 会話ログ節, 参考情報節, 節をつなぐ, 記憶節, 文体節 } from "./指示文";
 import 会話の規則 from "./会話-規則.md?raw";
 import 横槍の規則 from "./会話-横槍.md?raw";
+import { 数値, 文字列 } from "../共通/型";
+import type { 省略可, 読み取り専用配列 } from "../共通/型";
+import { 前後の空白を落とす, 空か, 繋ぐ } from "../共通/関数";
 import { 否定 } from "../共通/演算";
 
 export interface 会話の状況 {

@@ -16,13 +16,14 @@ import {
   発言者索引,
   事実を読み取る,
 } from "../核/学習";
-import type { 文字列, 真偽, 約束, 読み取り専用配列, 省略可 } from "../共通/型";
-import { 小数で書く, 空か, 長さ } from "../共通/関数";
-import { もし, 振り分ける, 試みる } from "../共通/構文";
-import { 否定 } from "../共通/演算";
-import { 記す, 注意, 異常 } from "../共通/記録";
 import type { 観測 } from "../核/記憶";
+import { 文字列, 未定義, 真偽 } from "../共通/型";
+import type { 省略可, 約束, 読み取り専用配列 } from "../共通/型";
+import { 小数で書く, 空か, 長さ } from "../共通/関数";
+import { 否定 } from "../共通/演算";
+import { もし, 振り分ける, 試みる } from "../共通/構文";
 import { 順に畳む } from "../共通/反復";
+import { 注意, 異常, 記す } from "../共通/記録";
 
 export async function 学習を一巡させる(
   部品: 部品一式,
@@ -88,10 +89,10 @@ async function すべてのサーバーを学ぶ(部品: 部品一式, 強制す
           サーバー一覧,
           async (直前, サーバーid) =>
             (await 一つのサーバーを学ぶ(部品, サーバーid, 強制するか)) ?? 直前,
-          undefined,
+          未定義,
         );
 
-        await 部品.予算番.仕事を終える("学習", true, undefined, モデル);
+        await 部品.予算番.仕事を終える("学習", true, 未定義, モデル);
 
         return { 成功か: true };
       },
@@ -116,7 +117,7 @@ async function 一つのサーバーを学ぶ(
         ならば: () => {
           記す(`学習: ${サーバーid} の未読は ${長さ(観測一覧)} 件だけ．待つ`);
 
-          return undefined;
+          return 未定義;
         },
       },
     ],

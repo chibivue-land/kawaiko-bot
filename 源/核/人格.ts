@@ -12,14 +12,14 @@
  *
  * ここに残すのは，その周りのわずかな振る舞いだけ．
  */
-import { 数学 } from "../共通/型";
-import { 探す, 畳む, 長さ } from "../共通/関数";
-import type { 文字列, 数値, 読み取り専用配列 } from "../共通/型";
 import 語彙集 from "./人格-語彙集.md?raw";
 import 指示書のひな型 from "./人格-指示書.md?raw";
 import 口調規則 from "./人格-口調.md?raw";
 import 抑揚 from "./人格-抑揚.json";
 import { 差し込む } from "./指示文";
+import { 数値, 数学, 文字列 } from "../共通/型";
+import type { 読み取り専用配列 } from "../共通/型";
+import { 探す, 畳む, 長さ } from "../共通/関数";
 
 /**
  * 1 発言ごとに選び直す「今回の返しの型」．

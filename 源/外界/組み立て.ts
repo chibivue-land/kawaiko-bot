@@ -8,8 +8,8 @@ import { Discordのチャット } from "./Discord/通信";
 import { RSSの見出し } from "./見出し";
 import { webの調査係 } from "./調査";
 import { 月の予算ドル, type 環境 } from "./環境";
-
 import { 数値, 数学 } from "../共通/型";
+import { 等しくない } from "../共通/演算";
 
 /**
  * 組み立ての場所 — バインディングを入れて，ポートを出す．
@@ -70,7 +70,7 @@ export function 部品を組み立てる(環境: 環境): 部品一式 {
 
     独言の確率: 環境.独言の確率,
     横槍の確率: 環境.横槍の確率,
-    観測するか: 環境.観測するか !== "false",
+    観測するか: 等しくない(環境.観測するか, "false"),
 
     現在時刻,
     乱数: 数学.random,

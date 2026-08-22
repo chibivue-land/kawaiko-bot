@@ -5,8 +5,9 @@
 import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
 import type { モデル提供者 } from "./提供者";
 import { 概算費用ドル } from "./料金";
-import { 置き換える, 前後の空白を落とす } from "../../共通/関数";
-import type { 文字列, 数値, 約束, 省略可, 記録, 不明 } from "../../共通/型";
+import { 数値, 文字列 } from "../../共通/型";
+import type { 不明, 省略可, 約束, 記録 } from "../../共通/型";
+import { 前後の空白を落とす, 置き換える } from "../../共通/関数";
 
 export function WorkersAI提供者(ai: Ai): モデル提供者 {
   // env.AI.run は組み込みモデル一覧で型が付いている．任意の id 用に広げる．

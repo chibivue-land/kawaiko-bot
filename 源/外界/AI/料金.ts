@@ -4,9 +4,9 @@
  * そもそも一銭も掛からないので，この見張りが効いてくるのは有料キーのとき．
  */
 import { 現在時刻, Temporal } from "../../核/時刻";
+import { 数値, 数学, 文字列 } from "../../共通/型";
+import type { 省略可 } from "../../共通/型";
 import { 前を埋める, 絞る, 長さ } from "../../共通/関数";
-import { 数学, 文字列 } from "../../共通/型";
-import type { 数値, 省略可 } from "../../共通/型";
 
 /** Gemini Interactions API の `usage` の形． */
 export interface 使用量 {

@@ -14,11 +14,12 @@ import { 人格指示書を組み立てる } from "../核/人格";
 import { 日本時間の表示 } from "../核/予定";
 import { 回避する件数 } from "../核/反復";
 import { リセット後に絞る, 自分の直近発言を集める } from "../核/転記";
-import type { 文字列, 真偽, 約束, 省略可 } from "../共通/型";
-import { 振り分ける, 試みる } from "../共通/構文";
-import { 否定 } from "../共通/演算";
+import { 文字列, 未定義, 真偽 } from "../共通/型";
+import type { 省略可, 約束 } from "../共通/型";
 import { 小数で書く } from "../共通/関数";
-import { 記す, 注意, 異常 } from "../共通/記録";
+import { 否定 } from "../共通/演算";
+import { 振り分ける, 試みる } from "../共通/構文";
+import { 注意, 異常, 記す } from "../共通/記録";
 
 export async function 独り言を投稿する(
   部品: 部品一式,
@@ -58,7 +59,7 @@ async function 予算を見てから呟く(部品: 部品一式): 約束<実行�
         試みる<実行結果>({
           実行: async () => {
             const モデル = await 呟く(部品);
-            await 部品.予算番.仕事を終える("独言", true, undefined, モデル);
+            await 部品.予算番.仕事を終える("独言", true, 未定義, モデル);
 
             return { 成功か: true };
           },

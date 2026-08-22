@@ -1,12 +1,11 @@
 import type { チャット } from "../../振る舞い/接続口";
 import type { 発言 } from "../../核/発言";
 import type { 環境 } from "../環境";
-
+import { 応答, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
+import type { 無, 省略可, 約束, 配列 } from "../../共通/型";
 import { 切り出す, 長さ } from "../../共通/関数";
-import { 注意 } from "../../共通/記録";
-import { 真偽, 例外, 文字列 } from "../../共通/型";
-import type { 真偽 as 真偽型, 約束, 配列, 省略可, 無, 応答 as 応答型 } from "../../共通/型";
 import { もし, 試みる } from "../../共通/構文";
+import { 注意 } from "../../共通/記録";
 
 /**
  * Discord の REST API を，チャットのポートへ合わせたもの．
@@ -59,7 +58,7 @@ export function Discordのチャット(環境: 環境): チャット {
         しくじったら: (躓き) => {
           注意("Discord: チャンネルのサーバーを引けなかった:", 文字列(躓き));
 
-          return undefined;
+          return 未定義;
         },
       });
     },
@@ -85,7 +84,7 @@ export function Discordのチャット(環境: 環境): チャット {
   };
 }
 
-async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答型> {
+async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答> {
   const 応答 = await fetch(`${基点}${経路}`, {
     ...設定,
     headers: {
@@ -97,8 +96,8 @@ async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): �
 
   return もし(応答.ok, {
     であれば: async () => 応答,
-    でなければ: async (): 約束<応答型> => {
-      throw new 例外(
+    でなければ: async (): 約束<応答> => {
+      throw 新しい例外(
         `Discord API ${設定.method ?? "GET"} ${経路} が失敗: ${応答.status} ${await 応答.text()}`,
       );
     },
@@ -107,9 +106,9 @@ async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): �
 
 interface 生の発言者 {
   id: 文字列;
-  bot?: 省略可<真偽型>;
+  bot?: 省略可<真偽>;
   username?: 省略可<文字列>;
-  global_name?: 省略可<文字列 | null>;
+  global_name?: 省略可<文字列 | 空>;
 }
 
 interface 生の発言 {
@@ -117,11 +116,11 @@ interface 生の発言 {
   content: 文字列;
   timestamp: 文字列;
   author: 生の発言者;
-  member?: 省略可<{ nick?: 省略可<文字列 | null> }>;
+  member?: 省略可<{ nick?: 省略可<文字列 | 空> }>;
 }
 
 /** ニックネーム > 表示名 > ユーザー名．Discord が実際に見せている順． */
-export function 表示名(発言者: 生の発言者, ニックネーム?: 省略可<文字列 | null>): 文字列 {
+export function 表示名(発言者: 生の発言者, ニックネーム?: 省略可<文字列 | 空>): 文字列 {
   return ニックネーム ?? 発言者.global_name ?? 発言者.username ?? "誰か";
 }
 

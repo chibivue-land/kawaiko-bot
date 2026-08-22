@@ -4,8 +4,8 @@ import type { 予算帳 } from "./永続体/予算";
 // Durable Object．両方を同時に import する場所は無い．
 import type { チャンネル記録帳 } from "./永続体/チャンネル記録";
 import type { Discord接続 } from "./Discord/接続";
-import { 数値 } from "../共通/型";
-import type { 文字列, 省略可 } from "../共通/型";
+import { 数値, 文字列 } from "../共通/型";
+import type { 省略可 } from "../共通/型";
 
 /**
  * Worker のバインディング．wrangler.jsonc の宣言そのまま．

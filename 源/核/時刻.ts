@@ -10,8 +10,9 @@
  * workerd で `Temporal is not defined` を実測)．ネイティブ実装が入ったら，
  * 直すのはこの import 一行だけで済む．
  */
-import type { 文字列, 数値, 省略可 } from "../共通/型";
 import { Temporal } from "temporal-polyfill";
+import { 数値, 文字列, 未定義 } from "../共通/型";
+import type { 省略可 } from "../共通/型";
 import { 試す } from "../共通/構文";
 export { Temporal };
 
@@ -31,7 +32,7 @@ export function 現在時刻(): Temporal.Instant {
 export function 時刻を読む(iso: 文字列): 省略可<Temporal.Instant> {
   return 試す({
     実行: () => Temporal.Instant.from(iso),
-    しくじったら: (): 省略可<Temporal.Instant> => undefined,
+    しくじったら: (): 省略可<Temporal.Instant> => 未定義,
   });
 }
 /** ISO 時刻のエポックミリ秒．読めなければ undefined． */

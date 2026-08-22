@@ -2,7 +2,8 @@ import { DurableObject } from "cloudflare:workers";
 import type { 仕事の種類 } from "../../振る舞い/接続口";
 import { 月キー } from "../AI/料金";
 import { ISO時刻 } from "../../核/時刻";
-import type { 文字列, 数値, 真偽, 無, 約束, 一部, 記録, 省略可 } from "../../共通/型";
+import { 数値, 文字列, 真偽 } from "../../共通/型";
+import type { 一部, 無, 省略可, 約束, 記録 } from "../../共通/型";
 
 export interface 仕事の記録 {
   時刻: 文字列;

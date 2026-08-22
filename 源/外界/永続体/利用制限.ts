@@ -1,9 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 import type { 利用制限の判定 } from "../../振る舞い/接続口";
 import { 現在時刻 } from "../../核/時刻";
-import { 数学 } from "../../共通/型";
-import type { 数値, 約束 } from "../../共通/型";
-import { 以上 } from "../../共通/演算";
+import { 数値, 数学 } from "../../共通/型";
+import type { 約束 } from "../../共通/型";
+import { 以上, 等しい } from "../../共通/演算";
 import { 振り分ける } from "../../共通/構文";
 
 /**
@@ -28,9 +28,9 @@ export class 利用制限帳 extends DurableObject {
 
     const 状態 = {
       時の窓,
-      時の回数: 保存済み?.時の窓 === 時の窓 ? 保存済み.時の回数 : 0,
+      時の回数: 等しい(保存済み?.時の窓, 時の窓) ? 保存済み.時の回数 : 0,
       日の窓,
-      日の回数: 保存済み?.日の窓 === 日の窓 ? 保存済み.日の回数 : 0,
+      日の回数: 等しい(保存済み?.日の窓, 日の窓) ? 保存済み.日の回数 : 0,
     };
 
     return 振り分ける<利用制限の判定>(

@@ -1,7 +1,7 @@
 import type { 見出し取得 } from "../振る舞い/接続口";
+import { 数値, 文字列, 新しい集合 } from "../共通/型";
+import type { 約束, 配列 } from "../共通/型";
 import { 写す, 前後の空白を落とす, 取り出す, 空か, 絞る } from "../共通/関数";
-import type { 文字列, 配列, 約束, 数値 } from "../共通/型";
-import { 集合 } from "../共通/型";
 import { 否定 } from "../共通/演算";
 import { もし, 試みる } from "../共通/構文";
 
@@ -18,7 +18,7 @@ export const RSSの見出し: 見出し取得 = {
     const 束 = await Promise.all(写す(購読先, 一つの購読から拾う));
 
     // フィードをまたいで同じ題名が来ることがあるので，順序を保ったまま重複を消す．
-    return 取り出す([...new 集合(束.flat())], 0, 上限);
+    return 取り出す([...新しい集合(束.flat())], 0, 上限);
   },
 };
 

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import { 数値, 文字列, 未定義 } from "../共通/型";
+import type { 不明, 無, 省略可, 約束, 記録 } from "../共通/型";
 
-import type { 文字列, 数値, 無, 不明, 約束, 記録, 省略可 } from "../共通/型";
+import { 等しい } from "../共通/演算";
 
 /**
  * テストの語彙．
@@ -96,7 +98,7 @@ export function 期待(値: 不明, 覚え書き?: 省略可<文字列>): 判定
 function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定するか: boolean): 判定 {
   // biome/oxlint 的には any だが，vitest の matcher は値ごとに型が変わるので
   // ここで一度だけ緩める．外へ漏らさない．
-  const 素 = 覚え書き === undefined ? expect(値) : expect(値, 覚え書き);
+  const 素 = 等しい(覚え書き, 未定義) ? expect(値) : expect(値, 覚え書き);
   const 的 = (否定するか ? 素.not : 素) as unknown as 記録<文字列, (...引数: 不明[]) => 無>;
 
   return {

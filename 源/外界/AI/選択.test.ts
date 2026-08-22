@@ -1,6 +1,8 @@
 import { 仕様, 検証, 期待, 偽装 } from "../../試験/言葉";
 import { モデル一覧を読む, 既定のモデル一覧, 順に試す発話器 } from "./選択";
 import type { モデル提供者 } from "./提供者";
+import { 新しい例外, 未定義 } from "../../共通/型";
+import { 等しい } from "../../共通/演算";
 
 const 依頼 = { 指示書: "指示書", 指示文: "指示文" };
 
@@ -19,14 +21,14 @@ function 提供者を作る(実行: (モデル: string) => Promise<string>): モ
   検証("kawaiko を落とした「1 日の無料枠」のエラーでも次へ渡す", () => {
     // 本番の文面そのまま．以前の「再試行してよいか」判定の一覧のどれにも当たらず，
     // 次のモデルへ行かずに連鎖が切れた．
-    const 枯渇 = new Error(
+    const 枯渇 = 新しい例外(
       "4006: you have used up your daily free allocation of 10,000 neurons, " +
         "please upgrade to Cloudflare's Workers Paid plan if you would like to continue usage.",
     );
     枯渇.name = "AiError";
 
     const 実行 = 偽装.fn(async (モデル: string) => {
-      if (モデル === "@cf/一つ目") throw 枯渇;
+      if (等しい(モデル, "@cf/一つ目")) throw 枯渇;
 
       return "二番目のモデルが答えた";
     });
@@ -42,7 +44,7 @@ function 提供者を作る(実行: (モデル: string) => Promise<string>): モ
 
   検証("誰も知らない失敗でも次へ渡す", async () => {
     const 実行 = 偽装.fn(async (モデル: string) => {
-      if (モデル === "あ") throw new Error("誰も数え上げていない失敗");
+      if (等しい(モデル, "あ")) throw 新しい例外("誰も数え上げていない失敗");
 
       return "生き残り";
     });
@@ -54,7 +56,7 @@ function 提供者を作る(実行: (モデル: string) => Promise<string>): モ
 
   検証("全部尽きたら最後の失敗を伝える", async () => {
     const 実行 = 偽装.fn(async (モデル: string) => {
-      throw new Error(`${モデル} が落ちている`);
+      throw 新しい例外(`${モデル} が落ちている`);
     });
 
     await 期待(順に試す発話器([提供者を作る(実行)], ["あ", "い"]).発話する(依頼)).投げる(
@@ -77,7 +79,7 @@ function 提供者を作る(実行: (モデル: string) => Promise<string>): モ
       名前: "cf",
       受け持つか: (モデル) => モデル.startsWith("@cf/"),
       async 実行する(モデル) {
-        throw new Error(`${モデル} は使えない`);
+        throw 新しい例外(`${モデル} は使えない`);
       },
     };
     const gemini: モデル提供者 = {
@@ -118,12 +120,12 @@ function 提供者を作る(実行: (モデル: string) => Promise<string>): モ
   });
 
   検証("未設定なら既定の一覧に倒れる", () => {
-    期待(モデル一覧を読む(undefined)).と等しい(既定のモデル一覧.split(","));
+    期待(モデル一覧を読む(未定義)).と等しい(既定のモデル一覧.split(","));
     期待(モデル一覧を読む("")).と等しい(既定のモデル一覧.split(","));
   });
 
   検証("既定では Workers AI が Gemini より先に来る", () => {
     // 1 日の無料枠を使い切ってから，従量課金の API へ行くべきなので．
-    期待(モデル一覧を読む(undefined)[0]?.startsWith("@cf/")).である(true);
+    期待(モデル一覧を読む(未定義)[0]?.startsWith("@cf/")).である(true);
   });
 });
