@@ -15,13 +15,37 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ["源/共通/約束.ts"],
   },
   // Vite Task の定義 (`vp run <名前>` で呼ぶ)．このリポジトリに npm scripts は無い．
-  // どちらも副作用があるので，Vite Task の結果キャッシュから外す．
+  //
+  // 結果はタスクキャッシュに入る (node_modules/.vite/task-cache)．鍵になるのは
+  // 読んだファイルの中身なので，触っていないところは CI でも手元でも 2 度は
+  // 走らない．input を書かずに任せているのは，自動追跡のほうが正確だから．
   run: {
     tasks: {
-      deploy: {
-        command: "vp build && wrangler deploy",
+      確認: {
+        command: "vp check",
+        // 何も書き出さない．通ったという事実だけがキャッシュに残る．
+        output: [],
+      },
+
+      試験: {
+        command: "vp test",
+        output: [],
+      },
+
+      組み立て: {
+        command: "vp build",
+        // キャッシュから戻すのはここ．戻したものは実ビルドと 1 バイトも違わない．
+        output: ["成果物/**"],
+      },
+
+      // 外へ出す 2 つは副作用があるので，結果を使い回さない．
+      // 配る が組み立てを自分でやらないのは，そこはキャッシュに任せたいため．
+      配る: {
+        command: "wrangler deploy",
+        dependsOn: ["組み立て"],
         cache: false,
       },
+
       アイコン同期: {
         command: "node 道具/アイコン同期.ts",
         cache: false,

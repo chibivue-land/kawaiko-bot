@@ -43,7 +43,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Put vp on PATH
         run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"

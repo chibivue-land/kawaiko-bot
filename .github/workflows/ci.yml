@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# 同じ枝に続けて push したら，追い越された回は畳む。
+# main は畳まない — その回の結果がデプロイの前提になっているので。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -27,16 +33,29 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # store は setup-node が持っている。ネットへ出るのは，そこに無いものだけ。
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Put vp on PATH
         run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
 
+      # Vite Task の結果キャッシュ。鍵は読んだファイルの中身なので、
+      # 触っていないタスクは走らずに前の結果を再生する。
+      # install より後に置く (node_modules ごと作り直されるため)。
+      - name: Restore the task cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.vite/task-cache
+          key: vp-task-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            vp-task-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            vp-task-${{ runner.os }}-
+
       - name: Lint / format / typecheck
-        run: vp check
+        run: vp run 確認
 
       - name: Test
-        run: vp test
+        run: vp run 試験
 
       - name: Build
-        run: vp build
+        run: vp run 組み立て

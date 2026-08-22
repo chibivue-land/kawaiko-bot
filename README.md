@@ -47,13 +47,21 @@ ubugeeei の過去の発言をもとにした人格 **kawaiko** が chibivue lan
 vp dev
 ```
 
+確認・試験・組み立ては Vite Task にしてある ([vite.config.ts](vite.config.ts))．`vp run` 越しに呼ぶと結果がキャッシュされ、触っていないものは 2 度走らない．
+
 ```bash
-vp test
+vp run 確認
 ```
 
 ```bash
-vp check
+vp run 試験
 ```
+
+```bash
+vp run 組み立て
+```
+
+キャッシュの鍵は**読んだファイルの中身**なので、枝を行き来しても、コミットを積み直しても効く．全部冷えていて 10.4 秒、温まっていれば 0.8 秒 (手元実測)．CI も同じキャッシュを跨いで持ち回る．素で回したいときは `vp test` / `vp check` / `vp build`、捨てたいときは `vp cache clean`．
 
 ローカルでシークレットが要る場合は `.dev.vars.example` を `.dev.vars` にコピーして埋める．
 
