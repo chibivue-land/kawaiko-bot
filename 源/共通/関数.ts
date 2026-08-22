@@ -123,6 +123,11 @@ export const 番号付きで = 呼ぶ.bind(Array.prototype.entries) as <要素>(
   一覧: 読み取り専用配列<要素>,
 ) => IterableIterator<[数値, 要素]>;
 
+/** 一段だけ平らにする． */
+export const 平らにする = 呼ぶ.bind(Array.prototype.flat) as <要素>(
+  一覧: 読み取り専用配列<読み取り専用配列<要素>>,
+) => 配列<要素>;
+
 /** 総和など，初期値から畳み込む． */
 export const 総和 = (一覧: 読み取り専用配列<数値>): 数値 => 畳む(一覧, (積, 値) => 積 + 値, 0);
 

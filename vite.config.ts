@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     include: ["源/**/*.test.ts"],
+    // 約束の `.んで` は組み込みのプロトタイプに足しているので，どの試験より
+    // 先に一度読み込ませる．
+    setupFiles: ["源/共通/約束.ts"],
   },
   // Vite Task の定義 (`vp run <名前>` で呼ぶ)．このリポジトリに npm scripts は無い．
   // どちらも副作用があるので，Vite Task の結果キャッシュから外す．

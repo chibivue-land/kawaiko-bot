@@ -2,7 +2,7 @@ import { 仕様, 検証, 期待 } from "../../試験/言葉";
 import { getTableConfig } from "drizzle-orm/sqlite-core";
 import { 記憶の出来事, 観測表 } from "./定義";
 import 移行のSQL from "../../../移行/0001_記憶ログ.sql?raw";
-import { 新しい型, 新しい集合 } from "../../共通/型";
+import { 新しい型, 新しい集合, 真 } from "../../共通/型";
 import { 等しい } from "../../共通/演算";
 
 /**
@@ -61,7 +61,7 @@ const 表一覧 = [観測表, 記憶の出来事];
     期待(表の定義("observations")).に一致する(/message_id\s+TEXT\s+NOT NULL\s+UNIQUE/);
     期待(
       getTableConfig(観測表).columns.find((列) => 等しい(列.name, "message_id"))?.isUnique,
-    ).である(true);
+    ).である(真);
   });
 
   検証("畳み込みが要るビューを宣言している", () => {

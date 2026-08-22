@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, sqliteView, text } from "drizzle-orm/sqlite-core";
+import { 真 } from "../../共通/型";
 
 /**
  * kawaiko の長期記憶の，Drizzle 側の定義．
@@ -16,7 +17,7 @@ import { index, integer, sqliteTable, sqliteView, text } from "drizzle-orm/sqlit
 export const 観測表 = sqliteTable(
   "observations",
   {
-    連番: integer("seq").primaryKey({ autoIncrement: true }),
+    連番: integer("seq").primaryKey({ autoIncrement: 真 }),
 
     サーバーid: text("guild_id").notNull(),
 
@@ -50,7 +51,7 @@ export const 記憶の出来事 = sqliteTable(
   "memory_events",
   {
     /** 単調増加．ロールバックが戻る位置そのものでもある． */
-    連番: integer("seq").primaryKey({ autoIncrement: true }),
+    連番: integer("seq").primaryKey({ autoIncrement: 真 }),
 
     サーバーid: text("guild_id").notNull(),
 
