@@ -24,8 +24,8 @@ export const 仕様 = describe;
 /** it — 何が成り立つべきか． */
 export const 検証 = it;
 
-/** vi — 偽の関数と時計． */
-export const 偽装 = vi;
+/** vi.fn — 呼ばれ方を覚える偽の関数． */
+export const 偽装する = vi.fn;
 
 export interface 判定 {
   /** toBe — 同一である． */
