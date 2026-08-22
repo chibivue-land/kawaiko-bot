@@ -132,6 +132,16 @@ export function 新しい応答(本体: 文字列, 設定?: ResponseInit): 応�
   return new Response(本体, 設定);
 }
 
+/** multipart の送り物を作る． */
+export function 新しい便(): FormData {
+  return new FormData();
+}
+
+/** バイト列を，送り出せる塊にする． */
+export function 新しい塊(中身: 読み取り専用配列<Uint8Array>, 設定?: BlobPropertyBag): Blob {
+  return new Blob(中身 as 配列<Uint8Array>, 設定);
+}
+
 /** 正規表現を作る． */
 export function 新しい型(型: 文字列, 印?: 文字列): RegExp {
   return new RegExp(型, 印);
