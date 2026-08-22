@@ -16,6 +16,8 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
   return {
     名前: "workers-ai",
     受け持つか: (モデル) => モデル.startsWith("@cf/"),
+    // Workers AI のモデルごとに画像の渡し方が違うので，いまは目が無いことにする．
+    画像を見られるか: () => 偽,
     実行する(モデル: 文字列, 依頼: 発話の依頼): 約束<発話の結果> {
       return 実行(モデル, {
         messages: [
