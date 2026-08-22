@@ -1,5 +1,5 @@
 node_modules/
-dist/
+成果物/
 .wrangler/
 .dev.vars
 *.local

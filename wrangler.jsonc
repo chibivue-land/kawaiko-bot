@@ -3,45 +3,42 @@
   "name": "kawaiko-bot",
   "main": "源/入口.ts",
   "compatibility_date": "2026-08-01",
-  // Some SDK dependencies import node:* modules; nodejs_compat provides them on Workers.
+  // 一部の SDK が node:* を import する．nodejs_compat がそれを Workers 上で用意する．
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true,
   },
-  // Workers Free allows only 5 cron triggers per account, so scheduling logic
-  // lives in src/schedule.ts and only two crons exist:
-  // - "*/5"   : watchdog that keeps the Discord Gateway WebSocket (DO) alive
-  // - "7 * *" : hourly dispatcher -> mutter on designated JST hours (~3/day
-  //             after POST_PROBABILITY), uninvited random reply every other
-  //             hour (x REPLY_PROBABILITY)
+  // Workers Free の cron は 1 アカウント 5 本まで．なので振り分けの理屈は
+  // 源/核/予定.ts に置き，cron は 2 本しか無い:
+  // - "*/5"   : Discord Gateway の WebSocket (永続体) を保つ番犬
+  // - "7 * *" : 毎時のディスパッチャ．日本時間で担当を振り分ける
+  //             (独言 / 横槍 / 学習)
   "triggers": {
     "crons": ["*/5 * * * *", "7 * * * *"],
   },
   "vars": {
-    // Comma-separated model preference list. "@cf/..." entries run on Workers
-    // AI (no API key, free daily allocation); "gemini-..." entries use the
-    // Gemini API. Quota/availability errors fall through to the next entry.
+    // モデルの優先順 (コンマ区切り)．"@cf/..." は Workers AI (API キー不要，
+    // 1 日ぶんの無料枠)，"gemini-..." は Gemini API．どんな理由で失敗しても
+    // 次の項目へ手渡す (源/外界/AI/選択.ts)．
     "モデル一覧": "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite",
-    // Probability that a mutter cron slot actually posts (0.0-1.0).
+    // 独言の枠が実際に投稿する確率 (0.0-1.0)．
     "独言の確率": "0.75",
-    // Probability that a reply cron slot actually replies (0.0-1.0).
+    // 横槍の枠が実際に絡む確率 (0.0-1.0)．
     "横槍の確率": "0.7",
-    // Per-user limits for mention replies. Deliberately huge: humans never
-    // hit these; they only stop runaway scripts/bot loops. Cost is bounded by
-    // the budget guard and the Workers AI free allocation anyway.
+    // 名指しへの返事の，利用者ごとの上限．意図して大きい: 人間は到達しない．
+    // 暴走したスクリプトや bot 同士のループを止めるためだけのもの．費用は
+    // 予算の見張りと Workers AI の無料枠が別に抑えている．
     "時あたりの上限": "500",
     "日あたりの上限": "5000",
-    // Soft monthly cost cap (USD) enforced in code via estimated usage.
-    // Also set a hard Workspace spend limit in the Anthropic Console (see README).
+    // 月ごとの概算費用の上限 (USD)．コード側の緩い歯止め．
     "月の予算ドル": "100",
-    // ---- Discord application ----
+    // ---- Discord アプリ ----
     "kawaikoのid": "1540328713248440390",
-    // kawaiko's home: the channel it mutters into and randomly replies in.
-    // Mentions/DMs work in any channel the bot can read.
+    // kawaiko の住処: 独り言を落とし，横槍を入れるチャンネル．
+    // 名指しへの返事は，bot が読めるどのチャンネルでも動く．
     "住処のチャンネルid": "1540327628035194911",
-    // Write every guild message to the D1 observation log (src/memory.ts), which
-    // is what the hourly learning pass reads. Set to "false" to stop observing;
-    // kawaiko then keeps only what it has already learned.
+    // サーバーの発言を D1 の観測ログへ書くか．毎時の学習がそれを読む．
+    // "false" にすると観測を止める (既に覚えたことは残る)．
     "観測するか": "true",
   },
   "ai": {
@@ -52,23 +49,22 @@
       { "name": "利用制限帳", "class_name": "利用制限帳" },
       { "name": "予算帳", "class_name": "予算帳" },
       { "name": "Discord接続", "class_name": "Discord接続" },
-      // One instance per Discord channel: "@kawaiko reset" only clears that channel.
+      // Discord のチャンネルごとに 1 つ．"@kawaiko reset" をそのチャンネルに閉じ込める．
       { "name": "チャンネル記録帳", "class_name": "チャンネル記録帳" },
     ],
   },
-  // ---- Long-term memory (D1) ----
-  // The database has to exist on the account first. The API token in
-  // CLOUDFLARE_API_TOKEN currently lacks D1 permissions, so create it by adding
-  // "D1: Edit" to that token and running the "Provision" workflow (or, locally,
-  // `wrangler d1 create kawaiko-bot`). Then paste database_id below and
-  // uncomment — deploy applies migrations/ automatically from there on.
-  // Until then every memory feature no-ops and the rest of the bot is unaffected.
+  // ---- 長期記憶 (D1) ----
+  // データベースがアカウント側に無いと始まらない．いまの CLOUDFLARE_API_TOKEN には
+  // D1 の権限が無く `wrangler d1 create` が落ちるので，そのトークンに "D1: Edit" を
+  // 足して "Provision" ワークフローを流す (ローカルなら `wrangler d1 create kawaiko-bot`)．
+  // 返ってきた database_id を下に貼ってコメントを外せば，以降は deploy が 移行/ を
+  // 自動で当てる．それまで記憶まわりは全て no-op で，他の機能は影響を受けない．
   //
   // "d1_databases": [
   //   {
   //     "binding": "記憶のD1",
   //     "database_name": "kawaiko-bot",
-  //     "database_id": "<paste from `wrangler d1 create kawaiko-bot`>",
+  //     "database_id": "<`wrangler d1 create kawaiko-bot` が返す id>",
   //     "migrations_dir": "移行",
   //   },
   // ],
@@ -93,7 +89,7 @@
       ],
     },
   ],
-  // Secrets (register with `wrangler secret put`):
-  //   DISCORD_BOT_TOKEN
-  //   GEMINI_API_KEY
+  // 秘密 (`wrangler secret put` で登録する)．名前が英語なのは GitHub Secrets が
+  // 英数字と下線しか許さず，deploy ワークフローがその名前で束ねているため:
+  //   DISCORD_BOT_TOKEN / GEMINI_API_KEY / TRIGGER_TOKEN / GH_API_TOKEN
 }

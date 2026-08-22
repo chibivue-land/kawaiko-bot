@@ -2,10 +2,11 @@ import type { チャット } from "../../振る舞い/接続口";
 import type { 発言 } from "../../核/発言";
 import type { 環境 } from "../環境";
 
-import { 切り出す } from "../../共通/関数";
+import { 切り出す, 長さ } from "../../共通/関数";
 import { 注意 } from "../../共通/記録";
-import { 真偽, 例外 } from "../../共通/型";
-import type { 文字列, 真偽 as 真偽型, 約束, 配列, 省略可, 無 } from "../../共通/型";
+import { 真偽, 例外, 文字列 } from "../../共通/型";
+import type { 真偽 as 真偽型, 約束, 配列, 省略可, 無, 応答 as 応答型 } from "../../共通/型";
+import { もし, 試みる } from "../../共通/構文";
 
 /**
  * Discord の REST API を，チャットのポートへ合わせたもの．
@@ -19,7 +20,7 @@ const 基点 = "https://discord.com/api/v10";
 export function 文字数を収める(本文: 文字列): 文字列 {
   const 上限 = 1990;
 
-  return 本文.length > 上限 ? `${切り出す(本文, 0, 上限)}…` : 本文;
+  return 長さ(本文) > 上限 ? `${切り出す(本文, 0, 上限)}…` : 本文;
 }
 
 export function Discordのチャット(環境: 環境): チャット {
@@ -49,15 +50,18 @@ export function Discordのチャット(環境: 環境): チャット {
     },
 
     async サーバーを引く(チャンネルid): 約束<省略可<文字列>> {
-      try {
-        const 応答 = await 呼ぶ(環境, `/channels/${チャンネルid}`, { method: "GET" });
+      return 試みる<省略可<文字列>>({
+        実行: async () => {
+          const 応答 = await 呼ぶ(環境, `/channels/${チャンネルid}`, { method: "GET" });
 
-        return ((await 応答.json()) as { guild_id?: 文字列 }).guild_id;
-      } catch (躓き) {
-        注意("Discord: チャンネルのサーバーを引けなかった:", String(躓き));
+          return ((await 応答.json()) as { guild_id?: 省略可<文字列> }).guild_id;
+        },
+        しくじったら: (躓き) => {
+          注意("Discord: チャンネルのサーバーを引けなかった:", 文字列(躓き));
 
-        return undefined;
-      }
+          return undefined;
+        },
+      });
     },
 
     /**
@@ -71,6 +75,7 @@ export function Discordのチャット(環境: 環境): チャット {
       await 打つ();
       const 時計 = setInterval(打つ, 8_000);
 
+      // 「何があっても必ず片付ける」を表すのは try/finally だけ．ここは素で残す．
       try {
         return await 処理();
       } finally {
@@ -80,7 +85,7 @@ export function Discordのチャット(環境: 環境): チャット {
   };
 }
 
-async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<Response> {
+async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答型> {
   const 応答 = await fetch(`${基点}${経路}`, {
     ...設定,
     headers: {
@@ -90,13 +95,14 @@ async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): �
     },
   });
 
-  if (!応答.ok) {
-    throw new 例外(
-      `Discord API ${設定.method ?? "GET"} ${経路} が失敗: ${応答.status} ${await 応答.text()}`,
-    );
-  }
-
-  return 応答;
+  return もし(応答.ok, {
+    であれば: async () => 応答,
+    でなければ: async (): 約束<応答型> => {
+      throw new 例外(
+        `Discord API ${設定.method ?? "GET"} ${経路} が失敗: ${応答.status} ${await 応答.text()}`,
+      );
+    },
+  });
 }
 
 interface 生の発言者 {

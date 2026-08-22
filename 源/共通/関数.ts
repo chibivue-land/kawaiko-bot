@@ -50,6 +50,18 @@ export const 小文字にする = 呼ぶ.bind(String.prototype.toLowerCase) as (
 
 export const 繰り返す = 呼ぶ.bind(String.prototype.repeat) as (文: 文字列, 回数: 数値) => 文字列;
 
+export const 始まるか = 呼ぶ.bind(String.prototype.startsWith) as (
+  文: 文字列,
+  接頭辞: 文字列,
+) => 真偽;
+
+export const 終わるか = 呼ぶ.bind(String.prototype.endsWith) as (
+  文: 文字列,
+  接尾辞: 文字列,
+) => 真偽;
+
+export const 小数で書く = 呼ぶ.bind(Number.prototype.toFixed) as (値: 数値, 桁: 数値) => 文字列;
+
 // ---- 配列 ----
 export const 写す = 呼ぶ.bind(Array.prototype.map) as <元, 先>(
   一覧: 読み取り専用配列<元>,
@@ -116,3 +128,13 @@ export const 総和 = (一覧: 読み取り専用配列<数値>): 数値 => 畳�
 
 /** 可変長の捕捉群は，何が来るか型で言えない． */
 type 任意 = any;
+
+/** 文字列でも配列でも長さ． */
+export function 長さ(もの: { readonly length: 数値 }): 数値 {
+  return もの.length;
+}
+
+/** 中身が無いか． */
+export function 空か(もの: { readonly length: 数値 }): 真偽 {
+  return もの.length === 0;
+}

@@ -1,32 +1,32 @@
-import { describe, expect, it } from "vitest";
+import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { 認可されているか, 記憶への問いを読み取る } from "./経路";
 
 const 場所 = (経路: string, 問い合わせ = "") =>
   new URL(`https://kawaiko.example${経路}${問い合わせ}`);
 
-describe("記憶への問いを読み取る", () => {
-  it("サーバーの指定が無ければ一覧を返す", () => {
-    expect(記憶への問いを読み取る("GET", 場所("/memory"))).toEqual({ 種別: "サーバー一覧" });
+仕様("記憶への問いを読み取る", () => {
+  検証("サーバーの指定が無ければ一覧を返す", () => {
+    期待(記憶への問いを読み取る("GET", 場所("/memory"))).と等しい({ 種別: "サーバー一覧" });
   });
 
-  it("1 つのサーバーの現状を読む", () => {
-    expect(記憶への問いを読み取る("GET", 場所("/memory", "?guild=g1"))).toEqual({
+  検証("1 つのサーバーの現状を読む", () => {
+    期待(記憶への問いを読み取る("GET", 場所("/memory", "?guild=g1"))).と等しい({
       種別: "現状",
       サーバーid: "g1",
     });
   });
 
-  it("回の取り消しは理由も一緒に運ぶ", () => {
-    expect(
+  検証("回の取り消しは理由も一緒に運ぶ", () => {
+    期待(
       記憶への問いを読み取る(
         "POST",
         場所("/memory/retract-batch", "?guild=g1&batch=b1&note=誤学習"),
       ),
-    ).toEqual({ 種別: "回を取り消す", サーバーid: "g1", 識別子: "b1", 理由: "誤学習" });
+    ).と等しい({ 種別: "回を取り消す", サーバーid: "g1", 識別子: "b1", 理由: "誤学習" });
   });
 
-  it("位置を指定して巻き戻す", () => {
-    expect(記憶への問いを読み取る("POST", 場所("/memory/rollback", "?guild=g1&seq=42"))).toEqual({
+  検証("位置を指定して巻き戻す", () => {
+    期待(記憶への問いを読み取る("POST", 場所("/memory/rollback", "?guild=g1&seq=42"))).と等しい({
       種別: "巻き戻す",
       サーバーid: "g1",
       連番: 42,
@@ -34,17 +34,13 @@ describe("記憶への問いを読み取る", () => {
     });
   });
 
-  it("対象の欠けた取り消しは受け取らない", () => {
-    expect(
-      記憶への問いを読み取る("POST", 場所("/memory/retract-batch", "?guild=g1")),
-    ).toBeUndefined();
-    expect(
-      記憶への問いを読み取る("POST", 場所("/memory/retract-batch", "?batch=b1")),
-    ).toBeUndefined();
-    expect(記憶への問いを読み取る("POST", 場所("/memory/rollback", "?seq=1"))).toBeUndefined();
+  検証("対象の欠けた取り消しは受け取らない", () => {
+    期待(記憶への問いを読み取る("POST", 場所("/memory/retract-batch", "?guild=g1"))).が未定義();
+    期待(記憶への問いを読み取る("POST", 場所("/memory/retract-batch", "?batch=b1"))).が未定義();
+    期待(記憶への問いを読み取る("POST", 場所("/memory/rollback", "?seq=1"))).が未定義();
   });
 
-  it("位置の書き忘れを「0 へ巻き戻す」と読まない", () => {
+  検証("位置の書き忘れを「0 へ巻き戻す」と読まない", () => {
     // 数値(null) も 数値("") も 0 になる．読み違えると，書き損じた要求が
     // 「このサーバーを丸ごと忘れる」になってしまう．
     for (const 問い合わせ of [
@@ -53,31 +49,29 @@ describe("記憶への問いを読み取る", () => {
       "?guild=g1&seq=abc",
       "?guild=g1&seq=-1",
     ]) {
-      expect(
+      期待(
         記憶への問いを読み取る("POST", 場所("/memory/rollback", 問い合わせ)),
         問い合わせ,
-      ).toBeUndefined();
+      ).が未定義();
     }
   });
 
-  it("はっきり書かれた 0 は受け取る", () => {
-    expect(
+  検証("はっきり書かれた 0 は受け取る", () => {
+    期待(
       記憶への問いを読み取る("POST", 場所("/memory/rollback", "?guild=g1&seq=0")),
-    ).toMatchObject({ 種別: "巻き戻す", 連番: 0 });
+    ).の形をしている({ 種別: "巻き戻す", 連番: 0 });
   });
 
-  it("壊す操作を GET では受け付けない", () => {
-    expect(
-      記憶への問いを読み取る("GET", 場所("/memory/rollback", "?guild=g1&seq=1")),
-    ).toBeUndefined();
+  検証("壊す操作を GET では受け付けない", () => {
+    期待(記憶への問いを読み取る("GET", 場所("/memory/rollback", "?guild=g1&seq=1"))).が未定義();
   });
 
-  it("知らない記憶の経路は断る", () => {
-    expect(記憶への問いを読み取る("POST", 場所("/memory/wipe", "?guild=g1"))).toBeUndefined();
+  検証("知らない記憶の経路は断る", () => {
+    期待(記憶への問いを読み取る("POST", 場所("/memory/wipe", "?guild=g1"))).が未定義();
   });
 });
 
-describe("認可されているか", () => {
+仕様("認可されているか", () => {
   const 見出し付きの要求 = (値?: string) =>
     new Request("https://kawaiko.example/memory", {
       headers: 値 ? { Authorization: 値 } : {},
@@ -86,18 +80,18 @@ describe("認可されているか", () => {
   // HTTP のヘッダは ByteString なので，合言葉は ASCII に限られる (実物もそう)．
   const 合言葉 = "s3cret";
 
-  it("設定した合言葉を受け入れる", () => {
-    expect(認可されているか(見出し付きの要求(`Bearer ${合言葉}`), 合言葉)).toBe(true);
+  検証("設定した合言葉を受け入れる", () => {
+    期待(認可されているか(見出し付きの要求(`Bearer ${合言葉}`), 合言葉)).である(true);
   });
 
-  it("違う / 無い合言葉は断る", () => {
-    expect(認可されているか(見出し付きの要求("Bearer wrong"), 合言葉)).toBe(false);
-    expect(認可されているか(見出し付きの要求(), 合言葉)).toBe(false);
+  検証("違う / 無い合言葉は断る", () => {
+    期待(認可されているか(見出し付きの要求("Bearer wrong"), 合言葉)).である(false);
+    期待(認可されているか(見出し付きの要求(), 合言葉)).である(false);
   });
 
-  it("合言葉が設定されていなければ何も通さない", () => {
+  検証("合言葉が設定されていなければ何も通さない", () => {
     // でないと，秘密の設定漏れがそのまま口の開放になる．
-    expect(認可されているか(見出し付きの要求("Bearer "), undefined)).toBe(false);
-    expect(認可されているか(見出し付きの要求("Bearer undefined"), "")).toBe(false);
+    期待(認可されているか(見出し付きの要求("Bearer "), undefined)).である(false);
+    期待(認可されているか(見出し付きの要求("Bearer undefined"), "")).である(false);
   });
 });

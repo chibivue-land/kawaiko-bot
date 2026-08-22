@@ -12,6 +12,7 @@
  */
 import type { 文字列, 数値, 省略可 } from "../共通/型";
 import { Temporal } from "temporal-polyfill";
+import { 試す } from "../共通/構文";
 export { Temporal };
 
 /** kawaiko は日本時間で生きている． */
@@ -28,13 +29,11 @@ export function 現在時刻(): Temporal.Instant {
  * ここの呼び出し側は例外より「不明」を受け取りたい．
  */
 export function 時刻を読む(iso: 文字列): 省略可<Temporal.Instant> {
-  try {
-    return Temporal.Instant.from(iso);
-  } catch {
-    return undefined;
-  }
+  return 試す({
+    実行: () => Temporal.Instant.from(iso),
+    しくじったら: (): 省略可<Temporal.Instant> => undefined,
+  });
 }
-
 /** ISO 時刻のエポックミリ秒．読めなければ undefined． */
 export function エポックミリ秒(iso: 文字列): 省略可<数値> {
   return 時刻を読む(iso)?.epochMilliseconds;

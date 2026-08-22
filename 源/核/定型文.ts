@@ -9,6 +9,7 @@
 import { 数学, 文字列 } from "../共通/型";
 import type { 読み取り専用配列, 省略可, 数値 } from "../共通/型";
 import 定型文 from "./定型文.json";
+import { 長さ } from "../共通/関数";
 
 export const 利用制限の文: 読み取り専用配列<文字列> = 定型文.利用制限;
 
@@ -34,6 +35,6 @@ export function 定型文を選ぶ(
   変数?: { 分?: 省略可<数値> },
   乱数: () => 数値 = 数学.random,
 ): 文字列 {
-  const 一文 = 候補[数学.floor(乱数() * 候補.length)]!;
+  const 一文 = 候補[数学.floor(乱数() * 長さ(候補))]!;
   return 一文.replace("{m}", 文字列(変数?.分 ?? 60));
 }

@@ -1,26 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { 空文字, 空行, 改行, 空白, タブ } from "./文字";
 import { 未定義, 空 } from "./型";
 
-describe("制御文字の定数", () => {
-  it("素のエスケープと同じものを指す", () => {
-    expect(改行).toBe("\n");
-    expect(空行).toBe("\n\n");
-    expect(タブ).toBe("\t");
-    expect(空白).toBe(" ");
-    expect(空文字).toBe("");
+仕様("制御文字の定数", () => {
+  検証("素のエスケープと同じものを指す", () => {
+    期待(改行).である("\n");
+    期待(空行).である("\n\n");
+    期待(タブ).である("\t");
+    期待(空白).である(" ");
+    期待(空文字).である("");
   });
 
-  it("繋ぐ の区切りとして読める", () => {
-    expect(["一", "二"].join(改行)).toBe("一\n二");
+  検証("繋ぐ の区切りとして読める", () => {
+    期待(["一", "二"].join(改行)).である("一\n二");
   });
 });
 
-describe("未定義 と 空", () => {
-  it("素の undefined / null と同一である", () => {
-    expect(未定義).toBeUndefined();
-    expect(空).toBeNull();
-    expect(未定義 === undefined).toBe(true);
-    expect(空 === null).toBe(true);
+仕様("未定義 と 空", () => {
+  検証("素の undefined / null と同一である", () => {
+    期待(未定義).が未定義();
+    期待(空).が空();
+    期待(未定義 === undefined).である(true);
+    期待(空 === null).である(true);
   });
 });

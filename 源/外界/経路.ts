@@ -1,6 +1,8 @@
 import type { 記憶への問い } from "../振る舞い/記憶操作";
 
 import { 応答, 数値, 真偽 } from "../共通/型";
+import { 前後の空白を落とす, 空か } from "../共通/関数";
+import { もし, 場合分け } from "../共通/構文";
 import type {
   文字列,
   数値 as 数値型,
@@ -34,36 +36,58 @@ export function 記憶への問いを読み取る(手段: 文字列, 場所: 場
   const サーバーid = 場所.searchParams.get("guild") ?? undefined;
   const 理由 = 場所.searchParams.get("note") ?? undefined;
 
-  if (手段 === "GET" && 場所.pathname === "/memory") {
-    return サーバーid ? { 種別: "現状", サーバーid } : { 種別: "サーバー一覧" };
-  }
+  return 場合分け(`${手段} ${場所.pathname}`, {
+    "GET /memory": () =>
+      もし(サーバーid !== undefined, {
+        であれば: (): 記憶への問い => ({ 種別: "現状", サーバーid: サーバーid! }),
+        でなければ: (): 記憶への問い => ({ 種別: "サーバー一覧" }),
+      }),
 
-  if (手段 === "POST" && 場所.pathname === "/memory/retract-batch") {
-    const 識別子 = 場所.searchParams.get("batch");
+    "POST /memory/retract-batch": () => {
+      const 識別子 = 場所.searchParams.get("batch");
 
-    return サーバーid && 識別子 ? { 種別: "回を取り消す", サーバーid, 識別子, 理由 } : undefined;
-  }
+      return もし(サーバーid !== undefined && 識別子 !== null, {
+        であれば: (): 省略可<記憶への問い> => ({
+          種別: "回を取り消す",
+          サーバーid: サーバーid!,
+          識別子: 識別子!,
+          理由,
+        }),
+        でなければ: (): 省略可<記憶への問い> => undefined,
+      });
+    },
 
-  if (手段 === "POST" && 場所.pathname === "/memory/rollback") {
-    // 厳しく読む．`数値(null)` も `数値("")` も 0 になるので，seq を書き忘れた
-    // だけのリクエストが「位置 0 へ巻き戻す」= サーバーごと忘れる，になってしまう．
-    const 連番 = 位置を読む(場所.searchParams.get("seq"));
+    "POST /memory/rollback": () => {
+      // 厳しく読む．`数値(null)` も `数値("")` も 0 になるので，seq を書き忘れた
+      // だけのリクエストが「位置 0 へ巻き戻す」= サーバーごと忘れる，になってしまう．
+      const 連番 = 位置を読む(場所.searchParams.get("seq"));
 
-    return サーバーid && 連番 !== undefined
-      ? { 種別: "巻き戻す", サーバーid, 連番, 理由 }
-      : undefined;
-  }
-
-  return undefined;
+      return もし(サーバーid !== undefined && 連番 !== undefined, {
+        であれば: (): 省略可<記憶への問い> => ({
+          種別: "巻き戻す",
+          サーバーid: サーバーid!,
+          連番: 連番!,
+          理由,
+        }),
+        でなければ: (): 省略可<記憶への問い> => undefined,
+      });
+    },
+  });
 }
 
 /** 0 以上の整数の位置．それ以外は undefined． */
 function 位置を読む(生: 文字列 | 空): 省略可<数値型> {
-  if (生 === null || 生.trim() === "") return undefined;
+  return もし(生 === null || 空か(前後の空白を落とす(生)), {
+    であれば: (): 省略可<数値型> => undefined,
+    でなければ: () => {
+      const 連番 = 数値(生!);
 
-  const 連番 = 数値(生);
-
-  return 数値.isInteger(連番) && 連番 >= 0 ? 連番 : undefined;
+      return もし(数値.isInteger(連番) && 連番 >= 0, {
+        であれば: (): 省略可<数値型> => 連番,
+        でなければ: (): 省略可<数値型> => undefined,
+      });
+    },
+  });
 }
 
 /** 記憶を見せる / 変える口を守る Bearer の確認． */

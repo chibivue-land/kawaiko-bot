@@ -9,10 +9,14 @@ import { 部品を組み立てる } from "../組み立て";
 import { 表示名 } from "./通信";
 import type { 環境 } from "../環境";
 
-import { 切り出す, 前後の空白を落とす, 写す } from "../../共通/関数";
-import { 場合分け, 試みる } from "../../共通/構文";
+import { 文字列 } from "../../共通/型";
+import { 切り出す, 前後の空白を落とす, 写す, 空か, 長さ } from "../../共通/関数";
+import { もし, 場合分け, 試す, 試みる } from "../../共通/構文";
 import { 記す, 注意, 異常 } from "../../共通/記録";
-import type { 文字列, 数値, 真偽, 無, 約束, 一部, 省略可, 不明 } from "../../共通/型";
+import type { 数値, 真偽, 無, 約束, 一部, 省略可, 不明 } from "../../共通/型";
+import type { 部品一式 } from "../../振る舞い/接続口";
+import { 否定 } from "../../共通/演算";
+import { 振り分ける } from "../../共通/構文";
 
 /**
  * Durable Object に住む Discord Gateway クライアント．
@@ -136,11 +140,15 @@ export class Discord接続 extends DurableObject<環境> {
   /** 何度呼んでもよい．接続があることと，番犬の alarm が張ってあることを保証する． */
   async 確かめる(): 約束<文字列> {
     await this.ctx.storage.setAlarm(現在時刻().epochMilliseconds + 60_000);
-    if (this.開いているか) return "繋がっている";
 
-    await this.繋ぐ();
+    return もし(this.開いているか, {
+      であれば: async () => "繋がっている",
+      でなければ: async () => {
+        await this.繋ぐ();
 
-    return "繋いでいる";
+        return "繋いでいる";
+      },
+    });
   }
 
   async alarm(): 約束<無> {
@@ -148,7 +156,13 @@ export class Discord接続 extends DurableObject<環境> {
   }
 
   private async 繋ぐ(): 約束<無> {
-    if (現在時刻().epochMilliseconds - this.直前の名乗り < 名乗りの間隔) return;
+    return もし(現在時刻().epochMilliseconds - this.直前の名乗り < 名乗りの間隔, {
+      であれば: async () => {},
+      でなければ: () => this.socketを張る(),
+    });
+  }
+
+  private async socketを張る(): 約束<無> {
     this.直前の名乗り = 現在時刻().epochMilliseconds;
     this.畳む();
 
@@ -156,11 +170,13 @@ export class Discord接続 extends DurableObject<環境> {
     const 応答 = await fetch(ゲートウェイのURL, { headers: { Upgrade: "websocket" } });
     const ws = 応答.webSocket;
 
-    if (!ws) {
-      異常(`接続: upgrade に失敗 (${応答.status})`);
-      return;
-    }
+    return もし(ws === null, {
+      であれば: async () => 異常(`接続: upgrade に失敗 (${応答.status})`),
+      でなければ: async () => this.socketを受け取る(ws!),
+    });
+  }
 
+  private socketを受け取る(ws: WebSocket): 無 {
     ws.accept();
     this.ws = ws;
     this.開いているか = true;
@@ -184,16 +200,19 @@ export class Discord接続 extends DurableObject<環境> {
   }
 
   private 畳む(): 無 {
-    if (this.心拍の時計 !== null) {
-      clearInterval(this.心拍の時計);
-      this.心拍の時計 = null;
-    }
+    もし(this.心拍の時計 !== null, {
+      であれば: () => {
+        clearInterval(this.心拍の時計!);
+        this.心拍の時計 = null;
+      },
+      でなければ: () => undefined,
+    });
 
-    try {
-      this.ws?.close(1000, "繋ぎ直す");
-    } catch {
+    試す({
+      実行: () => this.ws?.close(1000, "繋ぎ直す"),
       // もう閉じている．
-    }
+      しくじったら: () => undefined,
+    });
 
     this.ws = null;
     this.開いているか = false;
@@ -205,73 +224,85 @@ export class Discord接続 extends DurableObject<環境> {
   }
 
   private async 包みを捌く(生: 文字列): 約束<無> {
-    const 包み = 試みる<省略可<届いた包み>>({
+    const 中身 = await 試みる<省略可<届いた包み>>({
       実行: async () => JSON.parse(生) as 届いた包み,
-
       しくじったら: () => undefined,
     });
-    const 中身 = await 包み;
 
-    if (!中身) return;
-    if (typeof 中身.s === "number") this.連番 = 中身.s;
+    return もし(中身 === undefined, {
+      であれば: async () => {},
+      でなければ: () => this.命令を捌く(中身!),
+    });
+  }
 
-    if (中身.op === 命令.挨拶) {
-      const 間隔 = (中身.d as { heartbeat_interval: 数値 }).heartbeat_interval;
-      this.心拍を始める(間隔);
-      this.名乗る();
-      return;
-    }
-    if (中身.op === 命令.心拍) {
-      this.送る({ op: 命令.心拍, d: this.連番 });
-      return;
-    }
-    if (中身.op === 命令.心拍の応答) {
-      this.応答待ちか = false;
-      return;
-    }
-    if (中身.op === 命令.再接続 || 中身.op === 命令.無効な接続) {
+  private async 命令を捌く(中身: 届いた包み): 約束<無> {
+    もし(typeof 中身.s === "number", {
+      であれば: () => {
+        this.連番 = 中身.s as 数値;
+      },
+      でなければ: () => undefined,
+    });
+
+    return 場合分け(文字列(中身.op), {
+      [文字列(命令.挨拶)]: async () => {
+        const 間隔 = (中身.d as { heartbeat_interval: 数値 }).heartbeat_interval;
+        this.心拍を始める(間隔);
+        this.名乗る();
+      },
+      [文字列(命令.心拍)]: async () => this.送る({ op: 命令.心拍, d: this.連番 }),
+      [文字列(命令.心拍の応答)]: async () => {
+        this.応答待ちか = false;
+      },
       // 単純にいく: 接続を捨てて，次の番犬で名乗り直す．
-      this.畳む();
-      return;
-    }
-    if (中身.op !== 命令.配信) return;
+      [文字列(命令.再接続)]: async () => this.畳む(),
+      [文字列(命令.無効な接続)]: async () => this.畳む(),
+      [文字列(命令.配信)]: () => this.配信を捌く(中身),
+      それ以外: async () => {},
+    })!;
+  }
 
-    await 場合分け(中身.t ?? "", {
+  private async 配信を捌く(中身: 届いた包み): 約束<無> {
+    return 場合分け(中身.t ?? "", {
       READY: async () => {
         const 準備 = 中身.d as {
           user?: 省略可<{ id: 文字列; username: 文字列 }>;
-
           guilds?: 省略可<不明[]>;
         };
         記す("接続: 準備できた");
+
         await this.状態を記録する({
           準備できた時刻: ISO時刻(),
-
           bot利用者: 準備.user ? { id: 準備.user.id, username: 準備.user.username } : undefined,
-
-          サーバー数: 準備.guilds?.length,
+          サーバー数: 準備.guilds ? 長さ(準備.guilds) : undefined,
         });
       },
       MESSAGE_CREATE: async () => {
         await this.発言が来たとき(中身.d as 発言が来た);
       },
       それ以外: async () => {},
-    });
+    })!;
   }
 
   private 心拍を始める(間隔ミリ秒: 数値): 無 {
-    if (this.心拍の時計 !== null) clearInterval(this.心拍の時計);
+    もし(this.心拍の時計 !== null, {
+      であれば: () => clearInterval(this.心拍の時計!),
+      でなければ: () => undefined,
+    });
+
     this.応答待ちか = false;
 
     this.心拍の時計 = setInterval(() => {
-      if (this.応答待ちか) {
+      もし(this.応答待ちか, {
         // 死んだ接続．前の拍から応答が返っていない．
-        注意("接続: 心拍の応答が無いので繋ぎ直す");
-        this.畳む();
-        return;
-      }
-      this.応答待ちか = true;
-      this.送る({ op: 命令.心拍, d: this.連番 });
+        であれば: () => {
+          注意("接続: 心拍の応答が無いので繋ぎ直す");
+          this.畳む();
+        },
+        でなければ: () => {
+          this.応答待ちか = true;
+          this.送る({ op: 命令.心拍, d: this.連番 });
+        },
+      });
     }, 間隔ミリ秒);
   }
 
@@ -291,85 +322,115 @@ export class Discord接続 extends DurableObject<環境> {
   private async 発言が来たとき(発言: 発言が来た): 約束<無> {
     const 部品 = 部品を組み立てる(this.env);
     const 自分のid = 部品.自分のid;
-    const 本文 = 発言.content ?? "";
-
-    if (!発言.author) return;
-
     const サーバーid = 発言.guild_id;
-    if (!サーバーid) return; // サーバー内の発言だけ (DM は受けない)。
+    const 発言者 = 発言.author;
+    const 自分の発言か = 発言者?.id === 自分のid;
 
-    // 返事をするか決める前に観測する．kawaiko が学ぶのは自分宛ての発言だけでなく
-    // サーバー全体．自分の発言も記録に入るが，他所の bot は雑音．
-    const 発言者id = 発言.author.id;
-    const 自分の発言か = 発言者id === 自分のid;
+    return 振り分ける<無>(
+      [
+        // サーバー内の発言だけ (DM は受けない)．他所の bot は雑音．
+        { 条件: () => 発言者 === undefined, ならば: async () => {} },
+        { 条件: () => サーバーid === undefined, ならば: async () => {} },
+        { 条件: () => 発言者!.bot && 否定(自分の発言か), ならば: async () => {} },
+      ],
+      {
+        どれでもなければ: async () => {
+          // 返事をするか決める前に観測する．kawaiko が学ぶのは自分宛ての発言だけで
+          // なくサーバー全体．自分の発言も記録に入る．
+          await this.観測する(部品, 発言, サーバーid!, 自分の発言か);
 
-    if (発言.author.bot && !自分の発言か) return;
-
-    if (部品.観測するか && 部品.記憶庫.使えるか && 前後の空白を落とす(本文)) {
-      // Discord 自身の時刻を使い，読めなければ手元の時計．
-      const 時刻 =
-        (発言.timestamp ? エポックミリ秒(発言.timestamp) : undefined) ??
-        現在時刻().epochMilliseconds;
-
-      await 部品.記憶庫.観測する([
-        {
-          サーバーid,
-          チャンネルid: 発言.channel_id,
-
-          発言id: 発言.id,
-          発言者id,
-
-          発言者名: 表示名(発言.author, 発言.member?.nick),
-
-          kawaikoの発言か: 自分の発言か,
-
-          本文: 切り出す(前後の空白を落とす(本文), 0, 2000),
-          時刻,
+          return もし(自分の発言か, {
+            であれば: async () => {},
+            でなければ: () => this.名指しなら答える(部品, 発言, サーバーid!),
+          });
         },
-      ]);
-    }
+      },
+    );
+  }
 
-    if (自分の発言か) return;
+  /** サーバーの発言を観測ログへ積む． */
+  private async 観測する(
+    部品: 部品一式,
+    発言: 発言が来た,
+    サーバーid: 文字列,
+    自分の発言か: 真偽,
+  ): 約束<無> {
+    const 本文 = 前後の空白を落とす(発言.content ?? "");
+    const 積むか = 部品.観測するか && 部品.記憶庫.使えるか && 否定(空か(本文));
 
-    // 明示的なメンションと，kawaiko 自身の発言への返信に反応する．
+    return もし(積むか, {
+      であれば: async () => {
+        // Discord 自身の時刻を使い，読めなければ手元の時計．
+        const 時刻 =
+          (発言.timestamp ? エポックミリ秒(発言.timestamp) : undefined) ??
+          現在時刻().epochMilliseconds;
+
+        await 部品.記憶庫.観測する([
+          {
+            サーバーid,
+            チャンネルid: 発言.channel_id,
+            発言id: 発言.id,
+            発言者id: 発言.author!.id,
+            発言者名: 表示名(発言.author!, 発言.member?.nick),
+            kawaikoの発言か: 自分の発言か,
+            本文: 切り出す(本文, 0, 2000),
+            時刻,
+          },
+        ]);
+      },
+      でなければ: async () => {},
+    });
+  }
+
+  /** 明示的なメンションと，kawaiko 自身の発言への返信にだけ反応する． */
+  private async 名指しなら答える(部品: 部品一式, 発言: 発言が来た, サーバーid: 文字列): 約束<無> {
+    const 自分のid = 部品.自分のid;
+    const 本文 = 発言.content ?? "";
     const 自分への返信か = 発言.referenced_message?.author?.id === 自分のid;
     const 言及されたid一覧 = 発言.mentions ? 写す(発言.mentions, (言及) => 言及.id) : undefined;
+    const 応じるか = 自分への返信か || 名指しされたか(自分のid, 本文, 言及されたid一覧);
 
-    if (!自分への返信か && !名指しされたか(自分のid, 本文, 言及されたid一覧)) return;
+    return もし(応じるか, {
+      であれば: () => this.返事を試みる(部品, 発言, サーバーid),
+      でなければ: async () => {},
+    });
+  }
 
-    try {
-      const 結末 = await 名指しに返事する(部品, {
-        発言id: 発言.id,
+  private async 返事を試みる(部品: 部品一式, 発言: 発言が来た, サーバーid: 文字列): 約束<無> {
+    const 自分のid = 部品.自分のid;
+    const 本文 = 発言.content ?? "";
 
-        チャンネルid: 発言.channel_id,
-        サーバーid,
-        発言者id,
+    return 試みる<無>({
+      実行: async () => {
+        const 結末 = await 名指しに返事する(部品, {
+          発言id: 発言.id,
+          チャンネルid: 発言.channel_id,
+          サーバーid,
+          発言者id: 発言.author!.id,
+          相手の名前: 表示名(発言.author!, 発言.member?.nick),
+          本文: メンションを取り除く(自分のid, 本文),
+        });
 
-        相手の名前: 表示名(発言.author, 発言.member?.nick),
+        await this.状態を記録する({
+          直前の名指し: {
+            時刻: ISO時刻(),
+            成功か: true,
+            モデル: 結末.種別 === "返事した" ? 結末.モデル : undefined,
+          },
+        });
+      },
+      しくじったら: async (躓き) => {
+        異常("接続: 名指しへの返事に失敗:", 躓き);
+        await this.状態を記録する({
+          直前の名指し: { 時刻: ISO時刻(), 成功か: false, 異常: 失敗を要約する(躓き) },
+        });
 
-        本文: メンションを取り除く(自分のid, 本文),
-      });
-
-      await this.状態を記録する({
-        直前の名指し: {
-          時刻: ISO時刻(),
-
-          成功か: true,
-
-          モデル: 結末.種別 === "返事した" ? 結末.モデル : undefined,
-        },
-      });
-    } catch (躓き) {
-      異常("接続: 名指しへの返事に失敗:", 躓き);
-      await this.状態を記録する({
-        直前の名指し: { 時刻: ISO時刻(), 成功か: false, 異常: 失敗を要約する(躓き) },
-      });
-
-      try {
-        await 部品.チャット.投稿する(発言.channel_id, 定型文を選ぶ(異常の文), 発言.id);
-      } catch {
-        // 静かに諦める．
-      }
-    }
+        await 試みる<無>({
+          実行: () => 部品.チャット.投稿する(発言.channel_id, 定型文を選ぶ(異常の文), 発言.id),
+          // 静かに諦める．
+          しくじったら: () => undefined,
+        });
+      },
+    });
   }
 }

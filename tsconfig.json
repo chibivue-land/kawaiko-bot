@@ -13,5 +13,5 @@
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["源", "scripts", "vite.config.ts", "drizzle.config.ts"]
+  "include": ["源", "道具", "vite.config.ts", "drizzle.config.ts"]
 }

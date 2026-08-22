@@ -1,30 +1,30 @@
-import { describe, expect, it } from "vitest";
+import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { ISO時刻, エポックミリ秒, 時刻を読む, 日本時間, Temporal } from "./時刻";
 
-describe("時刻を読む", () => {
-  it("ISO 文字列を読める", () => {
-    expect(時刻を読む("2026-08-21T13:50:00Z")?.epochMilliseconds).toBe(
+仕様("時刻を読む", () => {
+  検証("ISO 文字列を読める", () => {
+    期待(時刻を読む("2026-08-21T13:50:00Z")?.epochMilliseconds).である(
       Date.UTC(2026, 7, 21, 13, 50),
     );
   });
 
-  it("壊れた入力では例外ではなく undefined を返す", () => {
-    expect(時刻を読む("not-a-timestamp")).toBeUndefined();
-    expect(エポックミリ秒("")).toBeUndefined();
+  検証("壊れた入力では例外ではなく undefined を返す", () => {
+    期待(時刻を読む("not-a-timestamp")).が未定義();
+    期待(エポックミリ秒("")).が未定義();
   });
 });
 
-describe("ISO時刻", () => {
-  it("ミリ秒精度に丸める", () => {
+仕様("ISO時刻", () => {
+  検証("ミリ秒精度に丸める", () => {
     const 時刻 = Temporal.Instant.from("2026-08-21T13:50:00.123456789Z");
-    expect(ISO時刻(時刻)).toBe("2026-08-21T13:50:00.123Z");
+    期待(ISO時刻(時刻)).である("2026-08-21T13:50:00.123Z");
   });
 });
 
-describe("日本時間", () => {
-  it("自前の時差計算ではなく実際のタイムゾーンを使う", () => {
+仕様("日本時間", () => {
+  検証("自前の時差計算ではなく実際のタイムゾーンを使う", () => {
     const 東京 = Temporal.Instant.from("2026-08-21T13:50:00Z").toZonedDateTimeISO(日本時間);
-    expect(東京.hour).toBe(22);
-    expect(東京.timeZoneId).toBe("Asia/Tokyo");
+    期待(東京.hour).である(22);
+    期待(東京.timeZoneId).である("Asia/Tokyo");
   });
 });
