@@ -13,6 +13,9 @@ on:
           - mutter
           - reply
 
+permissions:
+  contents: read
+
 jobs:
   trigger:
     runs-on: ubuntu-latest
@@ -21,7 +24,9 @@ jobs:
         run: |
           # wait=1 returns the outcome JSON so failures show up right here.
           curl -sf -X POST \
-            "https://kawaiko-bot.ubuge1122.workers.dev/trigger/${{ inputs.kind }}?wait=1" \
+            "https://kawaiko-bot.ubuge1122.workers.dev/trigger/$KIND?wait=1" \
             -H "Authorization: Bearer $TRIGGER_TOKEN"
         env:
           TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
+          # 入力は run の中へ直接展開しない (provision.yml と同じ理由)．
+          KIND: ${{ inputs.kind }}

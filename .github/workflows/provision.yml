@@ -11,6 +11,9 @@ on:
         required: true
         default: kawaiko-bot
 
+permissions:
+  contents: read
+
 concurrency:
   group: provision
   cancel-in-progress: false
@@ -21,12 +24,20 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # 入力は run の中へ直接展開しない．展開するとシェルとして解釈されるので，
+      # 名前に細工をされたら好きなコマンドが動いてしまう (script injection)．
+      # 環境変数に置いて，シェルには引用付きの変数として渡す．
+      D1_NAME: ${{ inputs.d1_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # このジョブは push しない．走っている間ジョブのトークンを
+          # .git/config に置いたままにしない．
+          persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
@@ -39,7 +50,7 @@ jobs:
 
       # 既にある場合は失敗するので握りつぶす (このジョブは何度流しても安全)。
       - name: Create D1 database
-        run: wrangler d1 create "${{ inputs.d1_name }}" || echo "already exists (or create failed; see the list below)"
+        run: wrangler d1 create "$D1_NAME" || echo "already exists (or create failed; see the list below)"
 
       # database_id はここから拾って wrangler.jsonc に転記する。
       - name: List D1 databases
