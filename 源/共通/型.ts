@@ -52,7 +52,7 @@ export type 約束<T> = Promise<T>;
 /**
  * 約束ではないが `.then` は持つもの．
  *
- * Drizzle のクエリビルダがこれ．`約束にする` を一度通せば普通の約束になる．
+ * Drizzle のクエリビルダがこれ．`約束に均す` を一度通せば普通の約束になる．
  */
 export type 約束もどき<T> = PromiseLike<T>;
 
