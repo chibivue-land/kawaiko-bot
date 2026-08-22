@@ -132,6 +132,19 @@ export function 新しい応答(本体: 文字列, 設定?: ResponseInit): 応�
   return new Response(本体, 設定);
 }
 
+/**
+ * base64 の文字列をバイト列に戻す．
+ *
+ * 実体は `Uint8Array.fromBase64`．型が無いのは lib を ES2022 に留めてあるから
+ * で，実体のほうは workerd にある (compatibility_date 2026-08-01 で実測)．
+ * 手で `atob` して 1 文字ずつ写すより速い — 600 KB で 5 ms と 0 ms の差．
+ */
+export function バイト列に戻す(base64: 文字列): Uint8Array {
+  const 戻し手 = Uint8Array as 不明 as { fromBase64(文: 文字列): Uint8Array };
+
+  return 戻し手.fromBase64(base64);
+}
+
 /** multipart の送り物を作る． */
 export function 新しい便(): FormData {
   return new FormData();
