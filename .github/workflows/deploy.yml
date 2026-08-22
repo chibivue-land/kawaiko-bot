@@ -30,13 +30,23 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Put vp on PATH
         run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
 
+      # CI と同じ鍵。前の main の回で通った試験・組み立ては，ここでは再生されるだけ。
+      - name: Restore the task cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.vite/task-cache
+          key: vp-task-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            vp-task-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            vp-task-${{ runner.os }}-
+
       - name: Test
-        run: vp test
+        run: vp run 試験
 
       # Skipped until the d1_databases binding is uncommented in wrangler.jsonc
       # (commented lines cannot match the anchored pattern).
@@ -51,13 +61,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Deploy Worker (build + wrangler deploy via Vite Task)
-        run: vp run deploy
+      # 組み立ては Vite Task の依存として走る (キャッシュに当たれば復元だけ)。
+      # 配る 自体はキャッシュしない — 外へ出す副作用は使い回せない。
+      - name: Deploy Worker
+        run: vp run 配る
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # GitHub Secrets are the source of truth; push them to the Worker on every deploy.
+      # GitHub Secrets is the source of truth; push them to the Worker on every deploy.
       - name: Sync Worker secrets
         run: |
           jq -n \
