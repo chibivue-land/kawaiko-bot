@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "kawaiko-bot",
-  "main": "src/index.ts",
+  "main": "源/入口.ts",
   "compatibility_date": "2026-08-01",
   // Some SDK dependencies import node:* modules; nodejs_compat provides them on Workers.
   "compatibility_flags": ["nodejs_compat"],
@@ -69,7 +69,7 @@
   //     "binding": "DB",
   //     "database_name": "kawaiko-bot",
   //     "database_id": "<paste from `wrangler d1 create kawaiko-bot`>",
-  //     "migrations_dir": "migrations",
+  //     "migrations_dir": "移行",
   //   },
   // ],
   "migrations": [
