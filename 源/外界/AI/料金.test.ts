@@ -2,6 +2,8 @@ import { 仕様, 検証, 期待 } from "../../試験/言葉";
 import { 概算費用ドル, 月キー } from "./料金";
 import { 文字数を収める } from "../Discord/通信";
 import { Temporal } from "../../核/時刻";
+import { 真 } from "../../共通/型";
+import { 以下 } from "../../共通/演算";
 
 仕様("概算費用ドル", () => {
   検証("思考トークンを出力の単価で数える", () => {
@@ -58,6 +60,6 @@ import { Temporal } from "../../核/時刻";
     const 収めた = 文字数を収める("あ".repeat(3000));
 
     期待(収めた.length).以下(2000);
-    期待(収めた.endsWith("…")).である(true);
+    期待(収めた.endsWith("…")).である(真);
   });
 });

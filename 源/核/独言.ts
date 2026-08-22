@@ -7,7 +7,7 @@ import { 返しの長さを選ぶ } from "./人格";
 import { 回避節, 節をつなぐ, 記憶節 } from "./指示文";
 import 作法 from "./独言-作法.md?raw";
 import お題集 from "./独言-お題.json";
-import { 数値, 数学, 文字列, 真偽 } from "../共通/型";
+import { 数値, 数学, 文字列, 真, 真偽 } from "../共通/型";
 import type { 省略可, 読み取り専用配列 } from "../共通/型";
 import { 写す, 前後の空白を落とす, 空か, 繋ぐ, 長さ } from "../共通/関数";
 import { 否定 } from "../共通/演算";
@@ -36,7 +36,7 @@ export function 投稿するか(確率: 文字列, 乱数: () => 数値 = 数学
   const 値 = 数値.parseFloat(確率);
 
   return もし(!数値.isFinite(値), {
-    であれば: () => true,
+    であれば: () => 真,
     でなければ: () => 乱数() < 数学.min(数学.max(値, 0), 1),
   });
 }

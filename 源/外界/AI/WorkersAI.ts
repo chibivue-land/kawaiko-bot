@@ -5,7 +5,7 @@
 import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
 import type { モデル提供者 } from "./提供者";
 import { 概算費用ドル } from "./料金";
-import { 数値, 文字列 } from "../../共通/型";
+import { 偽, 応答, 数値, 文字列 } from "../../共通/型";
 import type { 不明, 省略可, 約束, 記録 } from "../../共通/型";
 import { 前後の空白を落とす, 置き換える } from "../../共通/関数";
 
@@ -26,7 +26,7 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
         // GLM 系は chat_template_kwargs の enable_thinking を見る．それ以外は
         // reasoning_effort (呼び出し側の「深さ」に対応) を見る．
         reasoning_effort: 依頼.深さ ?? "low",
-        chat_template_kwargs: { enable_thinking: false },
+        chat_template_kwargs: { enable_thinking: 偽 },
       });
 
       const 費用ドル = 概算費用ドル(モデル, {

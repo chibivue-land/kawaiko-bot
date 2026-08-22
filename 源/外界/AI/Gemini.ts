@@ -6,7 +6,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
 import type { モデル提供者 } from "./提供者";
 import { 概算費用ドル } from "./料金";
-import { 文字列, 未定義 } from "../../共通/型";
+import { 偽, 文字列, 未定義 } from "../../共通/型";
 import type { 約束 } from "../../共通/型";
 import { 前後の空白を落とす } from "../../共通/関数";
 import { 等しい } from "../../共通/演算";
@@ -28,7 +28,7 @@ export function Gemini提供者(apiキー: 文字列): モデル提供者 {
           thinking_level: 依頼.深さ ?? "low",
         },
         // Google 側にやりとりを残す必要は無い．
-        store: false,
+        store: 偽,
       });
 
       const 費用ドル = 概算費用ドル(モデル, やりとり.usage ?? {});

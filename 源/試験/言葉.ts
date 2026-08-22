@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { 数値, 文字列, 未定義 } from "../共通/型";
+import { 偽, 数値, 文字列, 未定義 } from "../共通/型";
 import type { 不明, 無, 省略可, 約束, 記録 } from "../共通/型";
+import { 長さ } from "../共通/関数";
+import { より大きい, より小さい, 以上, 以下, 等しい } from "../共通/演算";
+import { しくじる } from "../共通/構文";
 
-import { 等しい } from "../共通/演算";
 
 /**
  * テストの語彙．
@@ -84,7 +86,7 @@ export interface 判定 {
   呼ばれた回数が(回数: 数値): 無;
 
   /** rejects.toThrow — 投げることを確かめる． */
-  投げる(文: 文字列): 約束<無>;
+  しくじる(文: 文字列): 約束<無>;
 
   /** not — 以下の判定をすべて否定する． */
   readonly 否: 判定;
@@ -92,7 +94,7 @@ export interface 判定 {
 
 /** expect — 値に期待を置く．第 2 引数は落ちたときに出る覚え書き． */
 export function 期待(値: 不明, 覚え書き?: 省略可<文字列>): 判定 {
-  return 判定を作る(値, 覚え書き, false);
+  return 判定を作る(値, 覚え書き, 偽);
 }
 
 function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定するか: boolean): 判定 {
@@ -120,7 +122,7 @@ function 判定を作る(値: 不明, 覚え書き: 省略可<文字列>, 否定
     呼ばれた: () => 的.toHaveBeenCalled!(),
     一度だけ呼ばれた: () => 的.toHaveBeenCalledOnce!(),
     呼ばれた回数が: (回数) => 的.toHaveBeenCalledTimes!(回数),
-    投げる: async (文) => {
+    しくじる: async (文) => {
       const 待ち = 否定するか ? expect(値).rejects.not : expect(値).rejects;
       await (待ち as unknown as { toThrow: (文: 文字列) => 約束<無> }).toThrow(文);
     },

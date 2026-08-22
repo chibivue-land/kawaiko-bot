@@ -10,10 +10,10 @@ import { 表示名 } from "./通信";
 import type { 環境 } from "../環境";
 
 import type { 部品一式 } from "../../振る舞い/接続口";
-import { 数値, 文字列, 未定義, 真偽, 空 } from "../../共通/型";
+import { 偽, 応答, 数値, 文字列, 未定義, 真, 真偽, 空 } from "../../共通/型";
 import type { 一部, 不明, 無, 省略可, 約束 } from "../../共通/型";
-import { 写す, 切り出す, 前後の空白を落とす, 空か, 長さ } from "../../共通/関数";
-import { 否定, 等しい, 等しくない } from "../../共通/演算";
+import { 写す, 切り出す, 前後の空白を落とす, 畳む, 空か, 繋ぐ, 長さ } from "../../共通/関数";
+import { 否定, 条件, 等しい, 等しくない } from "../../共通/演算";
 import { もし, 場合分け, 振り分ける, 試す, 試みる } from "../../共通/構文";
 import { 注意, 異常, 記す } from "../../共通/記録";
 
@@ -116,10 +116,10 @@ interface 発言が来た {
 
 export class Discord接続 extends DurableObject<環境> {
   private ws: WebSocket | 空 = 空;
-  private 開いているか = false;
+  private 開いているか = 偽;
   private 連番: 数値 | 空 = 空;
   private 心拍の時計: ReturnType<typeof setInterval> | 空 = 空;
-  private 応答待ちか = false;
+  private 応答待ちか = 偽;
   private 直前の名乗り = 0;
 
   /** 接続の診断．Worker の GET /status が出す． */
@@ -178,7 +178,7 @@ export class Discord接続 extends DurableObject<環境> {
   private socketを受け取る(ws: WebSocket): 無 {
     ws.accept();
     this.ws = ws;
-    this.開いているか = true;
+    this.開いているか = 真;
 
     ws.addEventListener("message", (出来事) => {
       void this.包みを捌く(String(出来事.data));
@@ -214,8 +214,8 @@ export class Discord接続 extends DurableObject<環境> {
     });
 
     this.ws = 空;
-    this.開いているか = false;
-    this.応答待ちか = false;
+    this.開いているか = 偽;
+    this.応答待ちか = 偽;
   }
 
   private 送る(包み: 届いた包み): 無 {
@@ -250,7 +250,7 @@ export class Discord接続 extends DurableObject<環境> {
       },
       [文字列(命令.心拍)]: async () => this.送る({ op: 命令.心拍, d: this.連番 }),
       [文字列(命令.心拍の応答)]: async () => {
-        this.応答待ちか = false;
+        this.応答待ちか = 偽;
       },
       // 単純にいく: 接続を捨てて，次の番犬で名乗り直す．
       [文字列(命令.再接続)]: async () => this.畳む(),
@@ -288,7 +288,7 @@ export class Discord接続 extends DurableObject<環境> {
       でなければ: () => 未定義,
     });
 
-    this.応答待ちか = false;
+    this.応答待ちか = 偽;
 
     this.心拍の時計 = setInterval(() => {
       もし(this.応答待ちか, {
@@ -298,7 +298,7 @@ export class Discord接続 extends DurableObject<環境> {
           this.畳む();
         },
         でなければ: () => {
-          this.応答待ちか = true;
+          this.応答待ちか = 真;
           this.送る({ op: 命令.心拍, d: this.連番 });
         },
       });
@@ -413,7 +413,7 @@ export class Discord接続 extends DurableObject<環境> {
         await this.状態を記録する({
           直前の名指し: {
             時刻: ISO時刻(),
-            成功か: true,
+            成功か: 真,
             // 判別可能ユニオンの絞り込みは，プロパティ経由の型述語では効かない．
             // ここは素の === でないと 結末.モデル が見えない．
             モデル: 結末.種別 === "返事した" ? 結末.モデル : 未定義,
@@ -423,7 +423,7 @@ export class Discord接続 extends DurableObject<環境> {
       しくじったら: async (躓き) => {
         異常("接続: 名指しへの返事に失敗:", 躓き);
         await this.状態を記録する({
-          直前の名指し: { 時刻: ISO時刻(), 成功か: false, 異常: 失敗を要約する(躓き) },
+          直前の名指し: { 時刻: ISO時刻(), 成功か: 偽, 異常: 失敗を要約する(躓き) },
         });
 
         await 試みる<無>({

@@ -1,10 +1,10 @@
 import type { チャット } from "../../振る舞い/接続口";
 import type { 発言 } from "../../核/発言";
 import type { 環境 } from "../環境";
-import { 応答, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
+import { 偽, 応答, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
 import type { 無, 省略可, 約束, 配列 } from "../../共通/型";
-import { 切り出す, 長さ } from "../../共通/関数";
-import { もし, 試みる } from "../../共通/構文";
+import { 写す, 切り出す, 長さ } from "../../共通/関数";
+import { しくじる, もし, 試みる } from "../../共通/構文";
 import { 注意 } from "../../共通/記録";
 
 /**
@@ -24,8 +24,8 @@ export function 文字数を収める(本文: 文字列): 文字列 {
 
 export function Discordのチャット(環境: 環境): チャット {
   return {
-    async 投稿する(チャンネルid, 本文, 返信先の発言id): 約束<無> {
-      await 呼ぶ(環境, `/channels/${チャンネルid}/messages`, {
+    投稿する(チャンネルid, 本文, 返信先の発言id): 約束<無> {
+      return 呼ぶ(環境, `/channels/${チャンネルid}/messages`, {
         method: "POST",
         body: JSON.stringify({
           content: 文字数を収める(本文),
@@ -33,28 +33,25 @@ export function Discordのチャット(環境: 環境): チャット {
             ? {
                 message_reference: { message_id: 返信先の発言id },
                 // 返信はするが相手を鳴らさない．kawaiko はそういうところが冷たい．
-                allowed_mentions: { replied_user: false },
+                allowed_mentions: { replied_user: 偽 },
               }
             : {}),
         }),
-      });
+      }).んで(() => 未定義);
     },
 
-    async 直近の発言(チャンネルid, 上限 = 30): 約束<配列<発言>> {
-      const 応答 = await 呼ぶ(環境, `/channels/${チャンネルid}/messages?limit=${上限}`, {
-        method: "GET",
-      });
-
-      return ((await 応答.json()) as 生の発言[]).map(発言に直す);
+    直近の発言(チャンネルid, 上限 = 30): 約束<配列<発言>> {
+      return 呼ぶ(環境, `/channels/${チャンネルid}/messages?limit=${上限}`, { method: "GET" })
+        .んで((応答) => 応答.json())
+        .んで((中身) => 写す(中身 as 生の発言[], 発言に直す));
     },
 
-    async サーバーを引く(チャンネルid): 約束<省略可<文字列>> {
+    サーバーを引く(チャンネルid): 約束<省略可<文字列>> {
       return 試みる<省略可<文字列>>({
-        実行: async () => {
-          const 応答 = await 呼ぶ(環境, `/channels/${チャンネルid}`, { method: "GET" });
-
-          return ((await 応答.json()) as { guild_id?: 省略可<文字列> }).guild_id;
-        },
+        実行: () =>
+          呼ぶ(環境, `/channels/${チャンネルid}`, { method: "GET" })
+            .んで((応答) => 応答.json())
+            .んで((中身) => (中身 as { guild_id?: 省略可<文字列> }).guild_id),
         しくじったら: (躓き) => {
           注意("Discord: チャンネルのサーバーを引けなかった:", 文字列(躓き));
 
@@ -67,41 +64,45 @@ export function Discordのチャット(環境: 環境): チャット {
      * 処理のあいだ「kawaiko が入力中…」を出し続ける．
      * 表示の失敗は握り潰す．返事のほうが大事なので．
      */
-    async 入力中にする(チャンネルid, 処理) {
+    入力中にする(チャンネルid, 処理) {
       const 打つ = () =>
-        呼ぶ(環境, `/channels/${チャンネルid}/typing`, { method: "POST" }).catch(() => {});
+        呼ぶ(環境, `/channels/${チャンネルid}/typing`, { method: "POST" }).しくじったら(
+          () => 未定義,
+        );
 
-      await 打つ();
-      const 時計 = setInterval(打つ, 8_000);
+      return 打つ().んで(() => {
+        const 時計 = setInterval(打つ, 8_000);
 
-      // 「何があっても必ず片付ける」を表すのは try/finally だけ．ここは素で残す．
-      try {
-        return await 処理();
-      } finally {
-        clearInterval(時計);
-      }
+        // 転んでも転ばなくても，必ず時計を止める．
+        return 処理().ともかく(() => clearInterval(時計));
+      });
     },
   };
 }
 
-async function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答> {
-  const 応答 = await fetch(`${基点}${経路}`, {
+function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答> {
+  return fetch(`${基点}${経路}`, {
     ...設定,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bot ${環境.DISCORD_BOT_TOKEN}`,
       ...設定.headers,
     },
-  });
-
-  return もし(応答.ok, {
-    であれば: async () => 応答,
-    でなければ: async (): 約束<応答> => {
-      throw 新しい例外(
-        `Discord API ${設定.method ?? "GET"} ${経路} が失敗: ${応答.status} ${await 応答.text()}`,
-      );
-    },
-  });
+  }).んで((応答) =>
+    もし(応答.ok, {
+      であれば: () => Promise.resolve(応答),
+      でなければ: () =>
+        応答
+          .text()
+          .んで((本文) =>
+            しくじる(
+              新しい例外(
+                `Discord API ${設定.method ?? "GET"} ${経路} が失敗: ${応答.status} ${本文}`,
+              ),
+            ),
+          ),
+    }),
+  );
 }
 
 interface 生の発言者 {

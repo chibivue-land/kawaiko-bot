@@ -25,6 +25,11 @@ export type 真偽 = boolean;
 
 export const 真偽 = Boolean;
 
+/** 真偽値そのもの． */
+export const 真 = 真偽(1);
+
+export const 偽 = 真偽(0);
+
 /** 返り値がないこと． */
 export type 無 = void;
 

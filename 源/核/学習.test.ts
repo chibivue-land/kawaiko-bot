@@ -7,6 +7,7 @@ import {
   発言者索引,
 } from "./学習";
 import type { 観測 } from "./記憶";
+import { 偽, 真 } from "../共通/型";
 
 function 観測を作る(連番: number, 発言者id: string, 発言者名: string, 本文: string): 観測 {
   return {
@@ -14,7 +15,7 @@ function 観測を作る(連番: number, 発言者id: string, 発言者名: stri
     チャンネルid: "ちゃんねる-1",
     発言者id,
     発言者名,
-    kawaikoの発言か: false,
+    kawaikoの発言か: 偽,
     本文,
     時刻: 1_756_000_000_000,
   };
@@ -49,7 +50,7 @@ const 発言者 = 発言者索引(窓);
 
   検証("kawaiko 自身の発言にはそう名前を付ける", () => {
     const 依頼 = 抽出依頼を組み立てる([
-      { ...観測を作る(3, "111", "x", "呟き"), kawaikoの発言か: true },
+      { ...観測を作る(3, "111", "x", "呟き"), kawaikoの発言か: 真 },
     ]);
 
     期待(依頼).を含む("kawaiko: 呟き");
@@ -60,11 +61,11 @@ const 発言者 = 発言者索引(窓);
   検証("表示名を id へ写し，kawaiko は入れない", () => {
     const 索引 = 発言者索引([
       観測を作る(1, "222", "ubugeeei", "あ"),
-      { ...観測を作る(2, "111", "kawaiko", "い"), kawaikoの発言か: true },
+      { ...観測を作る(2, "111", "kawaiko", "い"), kawaikoの発言か: 真 },
     ]);
 
     期待(索引.get("ubugeeei")).である("222");
-    期待(索引.has("kawaiko")).である(false);
+    期待(索引.has("kawaiko")).である(偽);
   });
 });
 
