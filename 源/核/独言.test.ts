@@ -57,7 +57,7 @@ describe("独り言の指示文を組み立てる", () => {
     expect(指示文).toContain("今回の長さ");
   });
 
-  it("見出しは、あるときだけ載せる", () => {
+  it("見出しは，あるときだけ載せる", () => {
     expect(独り言の指示文を組み立てる(素)).not.toContain("直近のニュース見出し");
     expect(独り言の指示文を組み立てる({ ...素, 見出し一覧: ["Vue 4 released"] })).toContain(
       "- Vue 4 released",

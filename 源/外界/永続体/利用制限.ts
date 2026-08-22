@@ -5,13 +5,13 @@ import { 数学 } from "../../共通/型";
 import type { 数値, 約束 } from "../../共通/型";
 
 /**
- * 利用者ごとの制限。idFromName(Discord のユーザー id) で 1 人 1 インスタンス。
- * 固定窓 (時 / 日) の数え上げを SQLite 付きストレージに持つ。
+ * 利用者ごとの制限．idFromName(Discord のユーザー id) で 1 人 1 インスタンス．
+ * 固定窓 (時 / 日) の数え上げを SQLite 付きストレージに持つ．
  *
  * クラス名だけ英語なのは wrangler.jsonc の `class_name` がこれを指しているため
- * (identifier ではなく deployment の名前なので)。
+ * (identifier ではなく deployment の名前なので)．
  */
-export class UserRateLimiter extends DurableObject {
+export class 利用制限帳 extends DurableObject {
   async 確認して数える(時あたり: 数値, 日あたり: 数値): 約束<利用制限の判定> {
     const 現在 = 現在時刻().epochMilliseconds;
     const 時の窓 = 数学.floor(現在 / 3_600_000);

@@ -1,6 +1,6 @@
 /**
- * Cloudflare Workers AI。モデル id は "@cf/" 始まり。API キーは要らず、アカウント
- * 自身の (小さな) 1 日ぶんの neuron 無料枠から引かれる。
+ * Cloudflare Workers AI．モデル id は "@cf/" 始まり．API キーは要らず，アカウント
+ * 自身の (小さな) 1 日ぶんの neuron 無料枠から引かれる．
  */
 import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
 import type { モデル提供者 } from "./提供者";
@@ -9,7 +9,7 @@ import { 置き換える, 前後の空白を落とす } from "../../共通/関�
 import type { 文字列, 数値, 約束, 省略可, 記録, 不明 } from "../../共通/型";
 
 export function WorkersAI提供者(ai: Ai): モデル提供者 {
-  // env.AI.run は組み込みモデル一覧で型が付いている。任意の id 用に広げる。
+  // env.AI.run は組み込みモデル一覧で型が付いている．任意の id 用に広げる．
   const 実行 = ai.run.bind(ai) as (モデル: 文字列, 入力: 記録<文字列, 不明>) => 約束<応答の形>;
 
   return {
@@ -22,8 +22,8 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
           { role: "user", content: 依頼.指示文 },
         ],
         max_completion_tokens: 依頼.最大トークン ?? 1024,
-        // GLM 系は chat_template_kwargs の enable_thinking を見る。それ以外は
-        // reasoning_effort (呼び出し側の「深さ」に対応) を見る。
+        // GLM 系は chat_template_kwargs の enable_thinking を見る．それ以外は
+        // reasoning_effort (呼び出し側の「深さ」に対応) を見る．
         reasoning_effort: 依頼.深さ ?? "low",
         chat_template_kwargs: { enable_thinking: false },
       });
@@ -32,7 +32,7 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
         total_input_tokens: 応答.usage?.prompt_tokens ?? 0,
         total_output_tokens: 応答.usage?.completion_tokens ?? 0,
       });
-      // 切り替えが効かなかったときのために、漏れた思考ブロックを落とす。
+      // 切り替えが効かなかったときのために，漏れた思考ブロックを落とす．
       const 生 = 応答.choices?.[0]?.message?.content ?? 応答.response ?? "";
       return {
         本文: 前後の空白を落とす(置き換える(生, /<think>[\s\S]*?<\/think>/g, "")),
@@ -43,7 +43,7 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
   };
 }
 
-/** OpenAI 互換の応答。古い Workers AI のモデルは `response` を使う。 */
+/** OpenAI 互換の応答．古い Workers AI のモデルは `response` を使う． */
 interface 応答の形 {
   response?: 省略可<文字列>;
   choices?: 省略可<Array<{ message?: 省略可<{ content?: 省略可<文字列> }> }>>;

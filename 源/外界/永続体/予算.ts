@@ -8,16 +8,16 @@ export interface 仕事の記録 {
   時刻: 文字列;
   成功か: 真偽;
   異常?: 省略可<文字列>;
-  /** 生成を担ったモデル (分かるとき)。 */
+  /** 生成を担ったモデル (分かるとき)． */
   モデル?: 省略可<文字列>;
 }
 
 /**
- * 月ごとの概算費用の見張り (idFromName("global") の単一インスタンス)。
- * MONTHLY_BUDGET_USD を超えたら生成を止める、コード側の緩い歯止め。あわせて
- * /status 用に、定期実行それぞれの最後の結果も持つ。
+ * 月ごとの概算費用の見張り (idFromName("global") の単一インスタンス)．
+ * MONTHLY_BUDGET_USD を超えたら生成を止める，コード側の緩い歯止め．あわせて
+ * /status 用に，定期実行それぞれの最後の結果も持つ．
  */
-export class BudgetTracker extends DurableObject {
+export class 予算帳 extends DurableObject {
   async 仕事を記録する(
     種類: 仕事の種類,
     成功か: 真偽,

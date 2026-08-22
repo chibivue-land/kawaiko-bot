@@ -14,11 +14,11 @@ import type {
 } from "../共通/型";
 
 /**
- * Worker の HTTP 面の、リクエストの読み取り。
+ * Worker の HTTP 面の，リクエストの読み取り．
  *
- * 入口.ts と分けてあるのは、Durable Object のクラス (ひいては
- * `cloudflare:workers`) をモジュールグラフに引き込まずに試験するため。ここは
- * バインディングに一切触らず、URL を意図へ変えるだけ。
+ * 入口.ts と分けてあるのは，Durable Object のクラス (ひいては
+ * `cloudflare:workers`) をモジュールグラフに引き込まずに試験するため．ここは
+ * バインディングに一切触らず，URL を意図へ変えるだけ．
  */
 
 /**
@@ -27,8 +27,8 @@ import type {
  *   POST /memory/retract-batch?guild=&batch=    学習 1 回を取り消す
  *   POST /memory/rollback?guild=&seq=           知識をその位置へ戻す
  *
- * 取り消しは POST 限定。リンクのプレビューや通りすがりのクローラーに kawaiko の
- * 記憶を消させないため。
+ * 取り消しは POST 限定．リンクのプレビューや通りすがりのクローラーに kawaiko の
+ * 記憶を消させないため．
  */
 export function 記憶への問いを読み取る(手段: 文字列, 場所: 場所型): 省略可<記憶への問い> {
   const サーバーid = 場所.searchParams.get("guild") ?? undefined;
@@ -45,8 +45,8 @@ export function 記憶への問いを読み取る(手段: 文字列, 場所: 場
   }
 
   if (手段 === "POST" && 場所.pathname === "/memory/rollback") {
-    // 厳しく読む。`数値(null)` も `数値("")` も 0 になるので、seq を書き忘れた
-    // だけのリクエストが「位置 0 へ巻き戻す」= サーバーごと忘れる、になってしまう。
+    // 厳しく読む．`数値(null)` も `数値("")` も 0 になるので，seq を書き忘れた
+    // だけのリクエストが「位置 0 へ巻き戻す」= サーバーごと忘れる，になってしまう．
     const 連番 = 位置を読む(場所.searchParams.get("seq"));
 
     return サーバーid && 連番 !== undefined
@@ -57,7 +57,7 @@ export function 記憶への問いを読み取る(手段: 文字列, 場所: 場
   return undefined;
 }
 
-/** 0 以上の整数の位置。それ以外は undefined。 */
+/** 0 以上の整数の位置．それ以外は undefined． */
 function 位置を読む(生: 文字列 | 空): 省略可<数値型> {
   if (生 === null || 生.trim() === "") return undefined;
 
@@ -66,7 +66,7 @@ function 位置を読む(生: 文字列 | 空): 省略可<数値型> {
   return 数値.isInteger(連番) && 連番 >= 0 ? 連番 : undefined;
 }
 
-/** 記憶を見せる / 変える口を守る Bearer の確認。 */
+/** 記憶を見せる / 変える口を守る Bearer の確認． */
 export function 認可されているか(要求: 要求型, 合言葉: 省略可<文字列>): 真偽型 {
   return 真偽(合言葉) && 要求.headers.get("Authorization") === `Bearer ${合言葉}`;
 }

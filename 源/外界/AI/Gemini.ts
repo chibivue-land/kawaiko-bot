@@ -1,6 +1,6 @@
 /**
- * Gemini Interactions API。呼び出し側が求めたときだけ、組み込みの google_search
- * ツール (グラウンディング) でブラウジングさせる。
+ * Gemini Interactions API．呼び出し側が求めたときだけ，組み込みの google_search
+ * ツール (グラウンディング) でブラウジングさせる．
  */
 import { GoogleGenAI } from "@google/genai";
 import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
@@ -24,7 +24,7 @@ export function Gemini提供者(apiキー: 文字列): モデル提供者 {
           max_output_tokens: 依頼.最大トークン ?? 2048,
           thinking_level: 依頼.深さ ?? "low",
         },
-        // Google 側にやりとりを残す必要は無い。
+        // Google 側にやりとりを残す必要は無い．
         store: false,
       });
 

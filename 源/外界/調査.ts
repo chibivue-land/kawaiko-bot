@@ -188,8 +188,8 @@ export async function gatherResearch(
 }
 
 /**
- * 調査係のポート。調べるまでもない問いかけには空文字を返すので、呼び出し側が
- * 二度判定しなくて済む。
+ * 調査係のポート．調べるまでもない問いかけには空文字を返すので，呼び出し側が
+ * 二度判定しなくて済む．
  */
 export function webの調査係(設定: { GitHubのトークン?: string }): 調査係 {
   return {

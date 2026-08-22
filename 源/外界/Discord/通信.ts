@@ -8,14 +8,14 @@ import { 真偽, 例外 } from "../../共通/型";
 import type { 文字列, 真偽 as 真偽型, 約束, 配列, 省略可, 無 } from "../../共通/型";
 
 /**
- * Discord の REST API を、チャットのポートへ合わせたもの。
+ * Discord の REST API を，チャットのポートへ合わせたもの．
  *
- * 内側へ渡るものはすべて 発言 に正規化してあるので、ユースケースが Discord の
- * JSON を読む場所は一つも無い。
+ * 内側へ渡るものはすべて 発言 に正規化してあるので，ユースケースが Discord の
+ * JSON を読む場所は一つも無い．
  */
 const 基点 = "https://discord.com/api/v10";
 
-/** Discord の 1 通は 2000 文字まで。 */
+/** Discord の 1 通は 2000 文字まで． */
 export function 文字数を収める(本文: 文字列): 文字列 {
   const 上限 = 1990;
 
@@ -32,7 +32,7 @@ export function Discordのチャット(環境: 環境): チャット {
           ...(返信先の発言id
             ? {
                 message_reference: { message_id: 返信先の発言id },
-                // 返信はするが相手を鳴らさない。kawaiko はそういうところが冷たい。
+                // 返信はするが相手を鳴らさない．kawaiko はそういうところが冷たい．
                 allowed_mentions: { replied_user: false },
               }
             : {}),
@@ -61,8 +61,8 @@ export function Discordのチャット(環境: 環境): チャット {
     },
 
     /**
-     * 処理のあいだ「kawaiko が入力中…」を出し続ける。
-     * 表示の失敗は握り潰す。返事のほうが大事なので。
+     * 処理のあいだ「kawaiko が入力中…」を出し続ける．
+     * 表示の失敗は握り潰す．返事のほうが大事なので．
      */
     async 入力中にする(チャンネルid, 処理) {
       const 打つ = () =>
@@ -114,7 +114,7 @@ interface 生の発言 {
   member?: 省略可<{ nick?: 省略可<文字列 | null> }>;
 }
 
-/** ニックネーム > 表示名 > ユーザー名。Discord が実際に見せている順。 */
+/** ニックネーム > 表示名 > ユーザー名．Discord が実際に見せている順． */
 export function 表示名(発言者: 生の発言者, ニックネーム?: 省略可<文字列 | null>): 文字列 {
   return ニックネーム ?? 発言者.global_name ?? 発言者.username ?? "誰か";
 }

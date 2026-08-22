@@ -15,15 +15,15 @@ import { 記す, 注意, 異常 } from "../../共通/記録";
 import type { 文字列, 数値, 真偽, 無, 約束, 一部, 省略可, 不明 } from "../../共通/型";
 
 /**
- * Durable Object に住む Discord Gateway クライアント。
+ * Durable Object に住む Discord Gateway クライアント．
  *
  * MESSAGE_CREATE (@kawaiko のメンションに要る) はゲートウェイの WebSocket でしか
- * 届かず、HTTP の interactions エンドポイントには来ない。この DO が外向きの
- * WebSocket を 1 本抱え、storage の alarm と 5 分ごとの cron が番犬として、
- * 立ち退きやデプロイの後に繋ぎ直す。
+ * 届かず，HTTP の interactions エンドポイントには来ない．この DO が外向きの
+ * WebSocket を 1 本抱え，storage の alarm と 5 分ごとの cron が番犬として，
+ * 立ち退きやデプロイの後に繋ぎ直す．
  *
- * ここは通信だけ。kawaiko が何を言うかは 振る舞い/返信.ts の担当で、この
- * ファイルの仕事はソケットのフレームを正規化した発言に変えて内側へ渡すこと。
+ * ここは通信だけ．kawaiko が何を言うかは 振る舞い/返信.ts の担当で，この
+ * ファイルの仕事はソケットのフレームを正規化した発言に変えて内側へ渡すこと．
  */
 const ゲートウェイのURL = "https://gateway.discord.gg/?v=10&encoding=json";
 
@@ -44,11 +44,11 @@ const 命令 = {
   心拍の応答: 11,
 } as const;
 
-// GUILD_MESSAGES (1 << 9) | MESSAGE_CONTENT (1 << 15)。
-// MESSAGE_CONTENT は特権。Developer Portal で有効化する (README 参照)。
+// GUILD_MESSAGES (1 << 9) | MESSAGE_CONTENT (1 << 15)．
+// MESSAGE_CONTENT は特権．Developer Portal で有効化する (README 参照)．
 const 意図 = (1 << 9) | (1 << 15);
 
-/** 名乗り直しの最短間隔 (Discord は 1 日あたりの回数を絞っている)。 */
+/** 名乗り直しの最短間隔 (Discord は 1 日あたりの回数を絞っている)． */
 const 名乗りの間隔 = 30_000;
 
 interface 届いた包み {
@@ -72,7 +72,7 @@ export interface 接続の状態 {
 
   直前の切断?: 省略可<{ 符号: 数値; 理由: 文字列; 時刻: 文字列 }>;
 
-  /** 直近の名指し処理の結末。調査用。 */
+  /** 直近の名指し処理の結末．調査用． */
   直前の名指し?: 省略可<{
     時刻: 文字列;
 
@@ -107,11 +107,11 @@ interface 発言が来た {
 
   mentions?: 省略可<Array<{ id: 文字列 }>>;
 
-  /** 返信のときに入る。kawaiko への返信に反応するのに使う。 */
+  /** 返信のときに入る．kawaiko への返信に反応するのに使う． */
   referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | null>;
 }
 
-export class DiscordGateway extends DurableObject<環境> {
+export class Discord接続 extends DurableObject<環境> {
   private ws: WebSocket | null = null;
   private 開いているか = false;
   private 連番: 数値 | null = null;
@@ -119,7 +119,7 @@ export class DiscordGateway extends DurableObject<環境> {
   private 応答待ちか = false;
   private 直前の名乗り = 0;
 
-  /** 接続の診断。Worker の GET /status が出す。 */
+  /** 接続の診断．Worker の GET /status が出す． */
   async 状態(): 約束<接続の状態> {
     const 保存済み = await this.ctx.storage.get<Omit<接続の状態, "繋がっているか">>("status");
 
@@ -133,7 +133,7 @@ export class DiscordGateway extends DurableObject<環境> {
     await this.ctx.storage.put("status", { ...保存済み, ...差分 });
   }
 
-  /** 何度呼んでもよい。接続があることと、番犬の alarm が張ってあることを保証する。 */
+  /** 何度呼んでもよい．接続があることと，番犬の alarm が張ってあることを保証する． */
   async 確かめる(): 約束<文字列> {
     await this.ctx.storage.setAlarm(現在時刻().epochMilliseconds + 60_000);
     if (this.開いているか) return "繋がっている";
@@ -152,7 +152,7 @@ export class DiscordGateway extends DurableObject<環境> {
     this.直前の名乗り = 現在時刻().epochMilliseconds;
     this.畳む();
 
-    // Workers から張るクライアント WebSocket は fetch + Upgrade (wss ではなく https)。
+    // Workers から張るクライアント WebSocket は fetch + Upgrade (wss ではなく https)．
     const 応答 = await fetch(ゲートウェイのURL, { headers: { Upgrade: "websocket" } });
     const ws = 応答.webSocket;
 
@@ -192,7 +192,7 @@ export class DiscordGateway extends DurableObject<環境> {
     try {
       this.ws?.close(1000, "繋ぎ直す");
     } catch {
-      // もう閉じている。
+      // もう閉じている．
     }
 
     this.ws = null;
@@ -230,7 +230,7 @@ export class DiscordGateway extends DurableObject<環境> {
       return;
     }
     if (中身.op === 命令.再接続 || 中身.op === 命令.無効な接続) {
-      // 単純にいく: 接続を捨てて、次の番犬で名乗り直す。
+      // 単純にいく: 接続を捨てて，次の番犬で名乗り直す．
       this.畳む();
       return;
     }
@@ -265,7 +265,7 @@ export class DiscordGateway extends DurableObject<環境> {
 
     this.心拍の時計 = setInterval(() => {
       if (this.応答待ちか) {
-        // 死んだ接続。前の拍から応答が返っていない。
+        // 死んだ接続．前の拍から応答が返っていない．
         注意("接続: 心拍の応答が無いので繋ぎ直す");
         this.畳む();
         return;
@@ -298,15 +298,15 @@ export class DiscordGateway extends DurableObject<環境> {
     const サーバーid = 発言.guild_id;
     if (!サーバーid) return; // サーバー内の発言だけ (DM は受けない)。
 
-    // 返事をするか決める前に観測する。kawaiko が学ぶのは自分宛ての発言だけでなく
-    // サーバー全体。自分の発言も記録に入るが、他所の bot は雑音。
+    // 返事をするか決める前に観測する．kawaiko が学ぶのは自分宛ての発言だけでなく
+    // サーバー全体．自分の発言も記録に入るが，他所の bot は雑音．
     const 発言者id = 発言.author.id;
     const 自分の発言か = 発言者id === 自分のid;
 
     if (発言.author.bot && !自分の発言か) return;
 
     if (部品.観測するか && 部品.記憶庫.使えるか && 前後の空白を落とす(本文)) {
-      // Discord 自身の時刻を使い、読めなければ手元の時計。
+      // Discord 自身の時刻を使い，読めなければ手元の時計．
       const 時刻 =
         (発言.timestamp ? エポックミリ秒(発言.timestamp) : undefined) ??
         現在時刻().epochMilliseconds;
@@ -331,7 +331,7 @@ export class DiscordGateway extends DurableObject<環境> {
 
     if (自分の発言か) return;
 
-    // 明示的なメンションと、kawaiko 自身の発言への返信に反応する。
+    // 明示的なメンションと，kawaiko 自身の発言への返信に反応する．
     const 自分への返信か = 発言.referenced_message?.author?.id === 自分のid;
     const 言及されたid一覧 = 発言.mentions ? 写す(発言.mentions, (言及) => 言及.id) : undefined;
 
@@ -368,7 +368,7 @@ export class DiscordGateway extends DurableObject<環境> {
       try {
         await 部品.チャット.投稿する(発言.channel_id, 定型文を選ぶ(異常の文), 発言.id);
       } catch {
-        // 静かに諦める。
+        // 静かに諦める．
       }
     }
   }
