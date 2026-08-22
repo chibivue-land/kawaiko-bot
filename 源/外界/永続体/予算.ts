@@ -1,5 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
-import type { 仕事の種類 } from "../../振る舞い/接続口";
+import type { 仕事の種類, 提供者の休み } from "../../振る舞い/接続口";
+import { 現在時刻 } from "../../核/時刻";
+import { もし } from "../../共通/構文";
+import { より大きい } from "../../共通/演算";
+import { 各要素に } from "../../共通/反復";
+import { 未定義 } from "../../共通/型";
 import { 月キー } from "../AI/料金";
 import { ISO時刻 } from "../../核/時刻";
 import { 数値, 文字列, 真偽 } from "../../共通/型";
@@ -39,6 +44,30 @@ export class 予算帳 extends DurableObject {
       横槍: await this.ctx.storage.get<仕事の記録>("last:横槍"),
       学習: await this.ctx.storage.get<仕事の記録>("last:学習"),
     };
+  }
+
+  /** いま休んでいる提供者．期限切れのものは読み出しの時点で落とす． */
+  async 休んでいる提供者(): 約束<記録<文字列, 提供者の休み>> {
+    const 保存済み = (await this.ctx.storage.get<記録<文字列, 提供者の休み>>("休み")) ?? {};
+    const 現在 = 現在時刻().epochMilliseconds;
+    const 生きている: 記録<文字列, 提供者の休み> = {};
+
+    各要素に(Object.entries(保存済み), ([名前, 休み]) => {
+      もし(より大きい(休み.いつまで, 現在), {
+        であれば: () => {
+          生きている[名前] = 休み;
+        },
+        でなければ: () => 未定義,
+      });
+    });
+
+    return 生きている;
+  }
+
+  async 提供者を休ませる(提供者名: 文字列, 休み: 提供者の休み): 約束<無> {
+    const 保存済み = await this.休んでいる提供者();
+
+    await this.ctx.storage.put("休み", { ...保存済み, [提供者名]: 休み });
   }
 
   async 予算を確認する(上限ドル: 数値): 約束<{ 許すか: 真偽; 使用済みドル: 数値 }> {
