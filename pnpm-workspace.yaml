@@ -11,7 +11,7 @@ catalog:
   "@google/genai": ^2.18.0
   drizzle-kit: ^0.31.10
   drizzle-orm: ^0.45.2
-  temporal-polyfill: ^1.0.4
+  temporal-polyfill-lite: ^0.4.2
   typescript: ^7.0.2
   # Vite+ ships its core as a drop-in replacement for vite.
   vite: npm:@voidzero-dev/vite-plus-core@0.2.9

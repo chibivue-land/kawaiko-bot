@@ -21,9 +21,9 @@ catalogs:
     drizzle-orm:
       specifier: ^0.45.2
       version: 0.45.2
-    temporal-polyfill:
-      specifier: ^1.0.4
-      version: 1.0.4
+    temporal-polyfill-lite:
+      specifier: ^0.4.2
+      version: 0.4.2
     typescript:
       specifier: ^7.0.2
       version: 7.0.2
@@ -50,9 +50,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@cloudflare/workers-types@5.20260821.1)
-      temporal-polyfill:
+      temporal-polyfill-lite:
         specifier: 'catalog:'
-        version: 1.0.4
+        version: 0.4.2
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: 'catalog:'
@@ -2062,14 +2062,8 @@ packages:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
 
-  temporal-polyfill@1.0.4:
-    resolution: {integrity: sha512-MLEU0qOD2uXlz24oINNtdLZQl8RgmMxSnRtKEGZGGetTJjlRwQJjk+VsJ4EREaUoiaTb8NJOcUiKtoAiWn9EBg==}
-
-  temporal-spec@1.0.1:
-    resolution: {integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==}
-
-  temporal-utils@1.0.2:
-    resolution: {integrity: sha512-1B8Dl4KzrOvsNUlpoWGno2VLQlxroLjDgc5NBjVC9ax9ymdo+ezfyvhyjEMx+IVfhINr6CIG2gcnlP95iRrybQ==}
+  temporal-polyfill-lite@0.4.2:
+    resolution: {integrity: sha512-AguA4sTLtAnpoJ62dk/kjssR5Tt1JmodrjS4r1o9IDkmxWJsqLJNsyicAZTpMY/Dt5AKF1tbkL9P84wGsXPhAQ==}
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -3665,14 +3659,7 @@ snapshots:
 
   supports-color@10.2.2: {}
 
-  temporal-polyfill@1.0.4:
-    dependencies:
-      temporal-spec: 1.0.1
-      temporal-utils: 1.0.2
-
-  temporal-spec@1.0.1: {}
-
-  temporal-utils@1.0.2: {}
+  temporal-polyfill-lite@0.4.2: {}
 
   tinybench@2.9.0: {}
 

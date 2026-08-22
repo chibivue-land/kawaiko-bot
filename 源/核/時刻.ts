@@ -9,8 +9,12 @@
  * Node も Temporal をまだ露出していないため (compatibility_date 2026-08-01 の
  * workerd で `Temporal is not defined` を実測)．ネイティブ実装が入ったら，
  * 直すのはこの import 一行だけで済む．
+ *
+ * 中身は temporal-polyfill-lite．要るのは ISO 暦と Asia/Tokyo だけで，暦を
+ * 全部積んだものは要らない．workerd 上で日本時間・曜日・ISO の読み書きが
+ * 正しいことは実測した．
  */
-import { Temporal } from "temporal-polyfill";
+import { Temporal } from "temporal-polyfill-lite";
 import { 数値, 文字列, 未定義 } from "../共通/型";
 import type { 省略可 } from "../共通/型";
 import { 試す } from "../共通/構文";

@@ -5,7 +5,7 @@
   "dependencies": {
     "@google/genai": "catalog:",
     "drizzle-orm": "catalog:",
-    "temporal-polyfill": "catalog:"
+    "temporal-polyfill-lite": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "catalog:",
