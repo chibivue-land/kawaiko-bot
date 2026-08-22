@@ -1,0 +1,32 @@
+# Single-package repo, but the catalog lives here on purpose: a dependency
+# version is written in exactly one place and package.json only points at it.
+# pnpm's own settings live here too, so nothing about resolution is split
+# across two files.
+packages:
+  - .
+
+catalog:
+  "@cloudflare/vite-plugin": ^1.53.1
+  "@cloudflare/workers-types": ^5.20260821.1
+  "@google/genai": ^2.18.0
+  drizzle-kit: ^0.31.10
+  drizzle-orm: ^0.45.2
+  temporal-polyfill: ^1.0.4
+  typescript: ^7.0.2
+  # Vite+ ships its core as a drop-in replacement for vite.
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.9
+  vite-plus: ^0.2.9
+  vitest: 4.1.11
+  wrangler: ^4.125.0
+
+overrides:
+  vite: "catalog:"
+
+# pnpm 11 refuses to install until every dependency with a postinstall script is
+# classified (`pnpm approve-builds` writes this). The two native toolchains need
+# theirs; nothing else does.
+allowBuilds:
+  "@google/genai": false
+  esbuild: true
+  protobufjs: false
+  workerd: true

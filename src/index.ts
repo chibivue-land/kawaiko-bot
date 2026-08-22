@@ -1,95 +1,93 @@
-import type { Env } from "./env";
-import { runLearningPass } from "./learn";
-import { postScheduledMutter } from "./mutter";
-import { postRandomReply } from "./replier";
-import { dispatchForHour, jstHour } from "./schedule";
-import {
-  knownGuilds,
-  learnCursor,
-  liveFacts,
-  recentBatches,
-  retractBatch,
-  rollbackTo,
-} from "./memory";
+import type { Env } from "./infra/env";
+import { monthlyBudgetUsd } from "./infra/env";
+import { kawaikoFrom } from "./infra/context";
+import { postScheduledMutter } from "./app/post-mutter";
+import { postRandomReply } from "./app/post-reply";
+import { runLearningPass } from "./app/learn";
+import { runMemoryAdmin } from "./app/memory-admin";
+import { authorized, json, parseMemoryQuery } from "./infra/http-routes";
+import { dispatchForHour, jstHour } from "./domain/schedule";
+import type { JobOutcome, Kawaiko } from "./app/ports";
 
-export { UserRateLimiter, BudgetTracker, ChannelMemory } from "./do";
-export { DiscordGateway } from "./gateway";
+export { UserRateLimiter } from "./infra/do/rate-limit";
+export { BudgetTracker } from "./infra/do/budget";
+export { ChannelMemory } from "./infra/do/channel-memory";
+export { DiscordGateway } from "./infra/discord/gateway";
+
+/**
+ * The Worker entry point: HTTP routes and the cron dispatcher.
+ *
+ * Nothing here decides what kawaiko says. It resolves a request into a use case
+ * (app-*) with ports built by infra-context.ts, and turns the answer back into
+ * a Response.
+ */
 
 /** Cron used purely as the gateway-connection watchdog. */
 const WATCHDOG_CRON = "*/5 * * * *";
 
+type Job = (kawaiko: Kawaiko, opts?: { force?: boolean }) => Promise<JobOutcome>;
+
+const JOBS: Record<string, Job> = {
+  mutter: postScheduledMutter,
+  reply: postRandomReply,
+  learn: runLearningPass,
+};
+
 export default {
   async fetch(request, env, ctx): Promise<Response> {
     const url = new URL(request.url);
+
     if (request.method === "GET" && url.pathname === "/") {
       // Health check; also a handy manual way to kick the gateway connection.
       ctx.waitUntil(ensureGateway(env));
       return new Response("kawaiko-bot is alive", { status: 200 });
     }
+
     if (request.method === "GET" && url.pathname === "/status") {
-      const gateway = env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global"));
-      const budgetUsd = Number(env.MONTHLY_BUDGET_USD) || 100;
-      const budget = env.BUDGET_TRACKER.get(env.BUDGET_TRACKER.idFromName("global"));
-      const { spentUsd } = await budget.checkBudget(budgetUsd);
-      const status = {
-        ...(await gateway.status()),
-        lastOutcomes: await budget.lastOutcomes(),
-        // Estimated spend this month vs the soft cap (code-side guard).
-        budget: { spentUsd: Number(spentUsd.toFixed(4)), budgetUsd },
-        // Presence booleans only — never the values.
-        secrets: {
-          DISCORD_BOT_TOKEN: Boolean(env.DISCORD_BOT_TOKEN),
-          GEMINI_API_KEY: Boolean(env.GEMINI_API_KEY),
-          TRIGGER_TOKEN: Boolean(env.TRIGGER_TOKEN),
-        },
-      };
       ctx.waitUntil(ensureGateway(env));
-      return new Response(JSON.stringify(status, null, 2), {
-        headers: { "Content-Type": "application/json" },
-      });
+      return json(await status(env));
     }
+
     // Debug: inspect what the research pipeline returns for a query.
     if (request.method === "GET" && url.pathname === "/research") {
-      const q = url.searchParams.get("q") ?? "";
-      if (!q) return new Response("missing q", { status: 400 });
-      const { gatherResearch } = await import("./research");
-      const block = await gatherResearch(q, { githubToken: env.GITHUB_API_TOKEN });
+      const question = url.searchParams.get("q") ?? "";
+      if (!question) return new Response("missing q", { status: 400 });
+      const block = await kawaikoFrom(env).research.lookup(question);
       return new Response(block || "(no results)", {
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       });
     }
-    // Inspect and undo what kawaiko has learned about a server.
-    // Authenticated: this returns observations about real people.
+
+    // Reading and undoing what kawaiko learned. Authenticated: it returns
+    // observations about real people.
     if (url.pathname.startsWith("/memory")) {
-      if (!authorized(request, env)) return new Response("unauthorized", { status: 401 });
-      return handleMemory(request, env, url);
+      if (!authorized(request, env.TRIGGER_TOKEN)) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      const query = parseMemoryQuery(request.method, url);
+      if (!query) return json({ error: "bad request" }, 400);
+      const result = await runMemoryAdmin(kawaikoFrom(env), query);
+      return json(result.body, result.status);
     }
+
     // Manual triggers (GitHub Actions "Mutter" workflow). Bypasses the
     // probability gate; the budget guard still applies.
     if (request.method === "POST" && url.pathname.startsWith("/trigger/")) {
-      if (!authorized(request, env)) return new Response("unauthorized", { status: 401 });
-      const kind = url.pathname.slice("/trigger/".length);
-      const wait = url.searchParams.get("wait") === "1";
-      const fn =
-        kind === "mutter"
-          ? postScheduledMutter
-          : kind === "reply"
-            ? postRandomReply
-            : kind === "learn"
-              ? runLearningPass
-              : null;
-      if (!fn) return new Response("unknown trigger", { status: 400 });
-      if (wait) {
-        // Synchronous mode: surface the outcome in the response for debugging.
-        const outcome = await fn(env, { force: true });
-        return new Response(JSON.stringify(outcome), {
-          status: outcome.ok ? 200 : 500,
-          headers: { "Content-Type": "application/json" },
-        });
+      if (!authorized(request, env.TRIGGER_TOKEN)) {
+        return new Response("unauthorized", { status: 401 });
       }
-      ctx.waitUntil(fn(env, { force: true }));
-      return new Response(`${kind} triggered\n`, { status: 202 });
+      const job = JOBS[url.pathname.slice("/trigger/".length)];
+      if (!job) return new Response("unknown trigger", { status: 400 });
+      const kawaiko = kawaikoFrom(env);
+      if (url.searchParams.get("wait") === "1") {
+        // Synchronous mode: surface the outcome in the response for debugging.
+        const outcome = await job(kawaiko, { force: true });
+        return json(outcome, outcome.ok ? 200 : 500);
+      }
+      ctx.waitUntil(job(kawaiko, { force: true }));
+      return new Response("triggered\n", { status: 202 });
     }
+
     return new Response("not found", { status: 404 });
   },
 
@@ -98,69 +96,32 @@ export default {
     ctx.waitUntil(ensureGateway(env));
     if (controller.cron === WATCHDOG_CRON) return;
 
-    // Hourly dispatcher: route by JST hour (see src/schedule.ts).
-    switch (dispatchForHour(jstHour())) {
-      case "mutter":
-        ctx.waitUntil(postScheduledMutter(env));
-        break;
-      case "reply":
-        ctx.waitUntil(postRandomReply(env));
-        break;
-      case "learn":
-        ctx.waitUntil(runLearningPass(env));
-        break;
-    }
+    // Hourly dispatcher: route by JST hour (see domain-schedule.ts).
+    const job = JOBS[dispatchForHour(jstHour())];
+    if (job) ctx.waitUntil(job(kawaikoFrom(env)));
   },
 } satisfies ExportedHandler<Env>;
 
-async function ensureGateway(env: Env): Promise<void> {
+async function status(env: Env): Promise<unknown> {
   const gateway = env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global"));
-  await gateway.ensure();
+  const tracker = env.BUDGET_TRACKER.get(env.BUDGET_TRACKER.idFromName("global"));
+  const budgetUsd = monthlyBudgetUsd(env);
+  const { spentUsd } = await tracker.checkBudget(budgetUsd);
+  return {
+    ...(await gateway.status()),
+    lastOutcomes: await tracker.lastOutcomes(),
+    // Estimated spend this month vs the soft cap (code-side guard).
+    budget: { spentUsd: Number(spentUsd.toFixed(4)), budgetUsd },
+    memory: { bound: Boolean(env.DB) },
+    // Presence booleans only — never the values.
+    secrets: {
+      DISCORD_BOT_TOKEN: Boolean(env.DISCORD_BOT_TOKEN),
+      GEMINI_API_KEY: Boolean(env.GEMINI_API_KEY),
+      TRIGGER_TOKEN: Boolean(env.TRIGGER_TOKEN),
+    },
+  };
 }
 
-function authorized(request: Request, env: Env): boolean {
-  const auth = request.headers.get("Authorization");
-  return Boolean(env.TRIGGER_TOKEN) && auth === `Bearer ${env.TRIGGER_TOKEN}`;
-}
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body, null, 2), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-
-/**
- * Memory admin surface. Undo is a single POST because the store is an
- * append-only log — nothing is restored, a newer event just supersedes.
- *
- *   GET  /memory?guild=<id>                    what kawaiko believes + recent batches
- *   POST /memory/retract-batch?guild=&batch=   undo one learning pass
- *   POST /memory/rollback?guild=&seq=          restore knowledge to an offset
- */
-async function handleMemory(request: Request, env: Env, url: URL): Promise<Response> {
-  if (!env.DB) return json({ error: "no D1 binding" }, 503);
-  const guildId = url.searchParams.get("guild");
-
-  if (request.method === "GET" && url.pathname === "/memory") {
-    if (!guildId) return json({ guilds: await knownGuilds(env) });
-    return json({
-      guild: guildId,
-      cursor: await learnCursor(env, guildId),
-      facts: await liveFacts(env, guildId, { limit: 200 }),
-      batches: await recentBatches(env, guildId),
-    });
-  }
-  if (request.method === "POST" && url.pathname === "/memory/retract-batch") {
-    const batch = url.searchParams.get("batch");
-    if (!guildId || !batch) return json({ error: "missing guild or batch" }, 400);
-    const ok = await retractBatch(env, guildId, batch, url.searchParams.get("note") ?? undefined);
-    return json({ ok, retracted: batch }, ok ? 200 : 500);
-  }
-  if (request.method === "POST" && url.pathname === "/memory/rollback") {
-    const seq = Number(url.searchParams.get("seq"));
-    if (!guildId || !Number.isFinite(seq)) return json({ error: "missing guild or seq" }, 400);
-    const ok = await rollbackTo(env, guildId, seq, url.searchParams.get("note") ?? undefined);
-    return json({ ok, restoredTo: seq }, ok ? 200 : 500);
-  }
-  return json({ error: "not found" }, 404);
+async function ensureGateway(env: Env): Promise<void> {
+  await env.DISCORD_GATEWAY.get(env.DISCORD_GATEWAY.idFromName("global")).ensure();
 }

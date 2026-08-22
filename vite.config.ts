@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => ({
   // Skip workerd during vitest runs — unit tests exercise pure functions in Node.
   plugins: mode === "test" ? [] : [cloudflare()],
   test: {
-    include: ["test/**/*.test.ts"],
+    include: ["src/**/*.test.ts"],
   },
   // Vite Task definitions (invoked via `vp run <task>`); no npm scripts in this repo.
   // Both tasks have side effects, so opt out of Vite Task's result caching.
