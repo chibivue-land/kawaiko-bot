@@ -1,6 +1,17 @@
 import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
+/**
+ * キャッシュの指紋に入れるもの．
+ *
+ * 基本は自動追跡 — 手で書いたグロブは必ずどこかでずれる．ただし
+ * `node_modules/.modules.yaml` は除く．pnpm が install のたびに書き直す
+ * メタデータで，中身が毎回変わるので，これが混ざっていると CI では**永久に
+ * ヒットしない** (実際に一度そうなった)．依存そのものの変化は，同じ自動追跡が
+ * 拾う依存のソースと，鍵に入れてある pnpm-lock.yaml が見ている．
+ */
+const 読んだもの = [{ auto: true }, "!node_modules/.modules.yaml"] as const;
+
 export default defineConfig(({ mode }) => ({
   // vitest のときは workerd を挟まない — 単体テストは Node 上の純粋な関数を叩く．
   plugins: mode === "test" ? [] : [cloudflare()],
@@ -23,17 +34,20 @@ export default defineConfig(({ mode }) => ({
     tasks: {
       確認: {
         command: "vp check",
+        input: 読んだもの,
         // 何も書き出さない．通ったという事実だけがキャッシュに残る．
         output: [],
       },
 
       試験: {
         command: "vp test",
+        input: 読んだもの,
         output: [],
       },
 
       組み立て: {
         command: "vp build",
+        input: 読んだもの,
         // キャッシュから戻すのはここ．戻したものは実ビルドと 1 バイトも違わない．
         output: ["成果物/**"],
       },
