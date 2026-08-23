@@ -1,19 +1,30 @@
-# 絵の下ごしらえを覗く手動ジョブ。
+# 中で何が起きたかを覗く手動ジョブ。
 #
 # TRIGGER_TOKEN は GitHub Secrets にしか無いので、手元にトークンが無くても
-# 中身を見られるようにここから叩く。/draw は描くところまでやるが Discord へは
-# 出さないので、何度流しても静か。
+# 中身を見られるようにここから叩く。
 #
-# 覗き先を /draw から広げないこと。このリポジトリは公開で、Actions のログも
-# 公開される。/memory や /status は実在の人物についての観測や運用の中身を
+#   ask   道案内が何と言い、何を引き、どこを開いたか
+#   draw  絵の下ごしらえ (描くが投稿はしない)
+#
+# どちらも Discord へは出さないので、何度流しても静か。
+#
+# 覗き先は選択肢に挙げたものだけに留めること。このリポジトリは公開で、Actions の
+# ログも公開される。/memory や /status は実在の人物についての観測や運用の中身を
 # 返すので、公開ログに流してよいものではない。
 name: Probe
 
 on:
   workflow_dispatch:
     inputs:
+      口:
+        description: "覗く口"
+        type: choice
+        default: ask
+        options:
+          - ask
+          - draw
       q:
-        description: "描かせるお題"
+        description: "お題 / 問いかけ"
         required: true
         default: 鴨鍋
 
@@ -24,14 +35,15 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Peek at the drawing pipeline
+      - name: Peek at the pipeline
         run: |
           # 入力は run の中へ直接展開しない (provision.yml と同じ理由)。
           curl -sS -G \
             --data-urlencode "q=$Q" \
             -H "Authorization: Bearer $TRIGGER_TOKEN" \
-            "https://kawaiko-bot.ubuge1122.workers.dev/draw" \
+            "https://kawaiko-bot.ubuge1122.workers.dev/$KUCHI" \
             | jq .
         env:
           TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
           Q: ${{ inputs.q }}
+          KUCHI: ${{ inputs.口 }}
