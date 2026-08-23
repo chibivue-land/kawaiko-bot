@@ -1,5 +1,5 @@
-import type { 利用制限帳 } from "./永続体/利用制限";
 import type { 予算帳 } from "./永続体/予算";
+import type { 利用制限帳 } from "./永続体/利用制限";
 // 振る舞い/接続口.ts の「チャンネル記録」ポートと同じ意味だが，こちらはそれを実装する
 // Durable Object．両方を同時に import する場所は無い．
 import type { チャンネル記録帳 } from "./永続体/チャンネル記録";

@@ -1,5 +1,7 @@
-import { 仕様, 検証, 期待, 偽装する } from "../../試験/言葉";
 import { WorkersAI提供者 } from "./WorkersAI";
+
+import { 仕様, 検証, 期待, 偽装する } from "../../試験/言葉";
+
 import { 偽, 文字列, 真 } from "../../共通/型";
 import type { 不明, 記録, 配列 } from "../../共通/型";
 

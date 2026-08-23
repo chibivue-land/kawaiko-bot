@@ -7,21 +7,26 @@
  *
  * 純粋な文字列処理．バインディングも I/O も無い．
  */
-import { 回避する件数 } from "./反復";
-import { 添付を書き出す, type 読んだ添付 } from "./添付";
-import type { 読んだ頁 } from "../振る舞い/接続口";
-import { 事実の最大長, 指示文に載せる事実の数, type 事実 } from "./記憶";
-import { 口調の規則, 返しの型を選ぶ, 返しの長さを選ぶ } from "./人格";
-import { その時刻の機嫌, 上機嫌の指示, type 機嫌 } from "./機嫌";
 import 会話ログの見出し from "./指示文-会話ログ.md?raw";
 import 参考情報の見出し from "./指示文-参考情報.md?raw";
-import 記憶の見出し from "./指示文-記憶.md?raw";
-import 添付の見出し from "./指示文-添付.md?raw";
-import 頁の見出し from "./指示文-頁.md?raw";
 import 回避の見出し from "./指示文-回避.md?raw";
+import 添付の見出し from "./指示文-添付.md?raw";
 import 言い直しの促し from "./指示文-言い直し.md?raw";
+import 記憶の見出し from "./指示文-記憶.md?raw";
+import 頁の見出し from "./指示文-頁.md?raw";
+
+import { 口調の規則, 返しの型を選ぶ, 返しの長さを選ぶ } from "./人格";
+import type { 読んだ頁 } from "./参照";
+import { 回避する件数 } from "./反復";
+import { その時刻の機嫌, 上機嫌の指示, type 機嫌 } from "./機嫌";
+import { 添付を書き出す, type 読んだ添付 } from "./添付";
+import { 事実の最大長, 指示文に載せる事実の数, type 事実 } from "./記憶";
+
 import { 数値, 数学, 文字列, 未定義 } from "../共通/型";
 import type { 省略可, 記録, 読み取り専用配列 } from "../共通/型";
+import { 改行, 空行 } from "../共通/文字";
+import { もし, 場合分け } from "../共通/構文";
+import { 否定, 等しい } from "../共通/演算";
 import {
   写す,
   切り出す,
@@ -32,9 +37,6 @@ import {
   繋ぐ,
   置き換える,
 } from "../共通/関数";
-import { 否定, 等しい } from "../共通/演算";
-import { もし, 場合分け } from "../共通/構文";
-import { 改行, 空行 } from "../共通/文字";
 
 /**
  * ひな型の `{{名前}}` を埋める．指示文の文言は，それを持つモジュールの隣の .md に

@@ -5,26 +5,28 @@
  * 部品一式だけ．だから WebSocket も Durable Object もモデルも無しで試験できる．
  */
 import { 絵を描いて返す } from "./作画";
-import { 重複を避けて発話する } from "./発話";
-import { 添付を読み込む } from "./添付読み込み";
 import type { 読んだ頁, 部品一式 } from "./接続口";
-import { リセット命令か } from "../核/命令";
+import { 添付を読み込む } from "./添付読み込み";
+import { 重複を避けて発話する } from "./発話";
+
+import { 日本時間の時, 日本時間の表示 } from "../核/予定";
+import { 人格指示書を組み立てる } from "../核/人格";
+import { 名指しへの指示文を組み立てる } from "../核/会話";
 import { 描く頼みか } from "../核/作画";
 import { 貼られた場所 } from "../核/参照";
-import { 調べる価値があるか } from "../核/問いかけ";
-import type { 添付 } from "../核/添付";
-import { 名指しへの指示文を組み立てる } from "../核/会話";
-import { 人格指示書を組み立てる } from "../核/人格";
-import { 日本時間の時, 日本時間の表示 } from "../核/予定";
 import { 回避する件数 } from "../核/反復";
-import { リセット後に絞る, 会話ログを組み立てる, 自分の直近発言を集める } from "../核/転記";
+import { リセット命令か } from "../核/命令";
+import { 調べる価値があるか } from "../核/問いかけ";
 import { リセットの文, 予算超過の文, 利用制限の文, 定型文を選ぶ } from "../核/定型文";
+import type { 添付 } from "../核/添付";
+import { リセット後に絞る, 会話ログを組み立てる, 自分の直近発言を集める } from "../核/転記";
+
 import { 文字列, 未定義, 真偽 } from "../共通/型";
 import type { 無, 省略可, 約束, 読み取り専用配列, 配列 } from "../共通/型";
-import { 否定, 等しくない } from "../共通/演算";
-import { 写す, 絞る } from "../共通/関数";
 import { もし, 振り分ける } from "../共通/構文";
+import { 否定, 等しくない } from "../共通/演算";
 import { 揃える } from "../共通/約束";
+import { 写す, 絞る } from "../共通/関数";
 
 /** kawaiko 宛ての発言．ゲートウェイの生の payload から正規化したもの． */
 export interface 届いた名指し {

@@ -1,7 +1,10 @@
-import { 仕様, 検証, 期待 } from "../../試験/言葉";
-import { 概算費用ドル, 月キー } from "./料金";
 import { 文字数を収める } from "../Discord/通信";
+import { 概算費用ドル, 月キー } from "./料金";
+
 import { Temporal } from "../../核/時刻";
+
+import { 仕様, 検証, 期待 } from "../../試験/言葉";
+
 import { 真 } from "../../共通/型";
 
 仕様("概算費用ドル", () => {

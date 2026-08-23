@@ -4,12 +4,16 @@
  *
  * 入力はチャット API が返すのと同じ「新しい順」．
  */
-import type { 発言 } from "./発言";
 import { 反復しているか } from "./反復";
-import { 添付の印 } from "./添付";
 import { エポックミリ秒 } from "./時刻";
+import { 添付の印 } from "./添付";
+import type { 発言 } from "./発言";
+
 import { 偽, 数値, 文字列, 真 } from "../共通/型";
 import type { 読み取り専用配列, 配列 } from "../共通/型";
+import { 改行 } from "../共通/文字";
+import { もし } from "../共通/構文";
+import { 否定, 等しい, 等しくない } from "../共通/演算";
 import {
   写す,
   切り出す,
@@ -22,9 +26,6 @@ import {
   置き換える,
   逆順にする,
 } from "../共通/関数";
-import { 否定, 等しい, 等しくない } from "../共通/演算";
-import { もし } from "../共通/構文";
-import { 改行 } from "../共通/文字";
 
 /**
  * 会話ログを組み立てる (出力は古い順)．

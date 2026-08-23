@@ -6,13 +6,15 @@
  */
 import 依頼のひな型 from "./作画-依頼.md?raw";
 import 役割のひな型 from "./作画-役割.md?raw";
+
 import { 口調の規則 } from "./人格";
 import { 差し込む } from "./指示文";
+
 import { 文字列, 新しい型, 未定義, 空 } from "../共通/型";
 import type { 省略可 } from "../共通/型";
-import { 前後の空白を落とす, 切り出す, 空か, 置き換える } from "../共通/関数";
-import { 等しい } from "../共通/演算";
 import { もし } from "../共通/構文";
+import { 等しい } from "../共通/演算";
+import { 前後の空白を落とす, 切り出す, 空か, 置き換える } from "../共通/関数";
 
 /** 画像生成モデルへ渡すプロンプトの上限．長すぎるものは効かないので刈る． */
 export const 絵の指示の最大長 = 400;

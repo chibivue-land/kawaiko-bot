@@ -1,10 +1,13 @@
-import { 仕様, 検証, 期待, 偽装する } from "../試験/言葉";
-import { 一度に読む数, 添付を読み込む } from "./添付読み込み";
 import type { 添付読み } from "./接続口";
+import { 一度に読む数, 添付を読み込む } from "./添付読み込み";
+
 import type { 添付 } from "../核/添付";
+
+import { 仕様, 検証, 期待, 偽装する } from "../試験/言葉";
+
+import { 範囲 } from "../共通/反復";
 import { 未定義 } from "../共通/型";
 import { 写す, 長さ } from "../共通/関数";
-import { 範囲 } from "../共通/反復";
 
 function 添付を作る(差分: Partial<添付> = {}): 添付 {
   return {

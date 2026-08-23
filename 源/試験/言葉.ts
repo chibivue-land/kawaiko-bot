@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+
 import { 偽, 数値, 文字列, 未定義, 真偽 } from "../共通/型";
 import type { 不明, 無, 省略可, 約束, 約束もどき, 記録 } from "../共通/型";
 import { 否定, 等しい } from "../共通/演算";

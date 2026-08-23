@@ -1,10 +1,12 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
-import { 部品を組み立てる } from "./組み立て";
 import type { 環境 } from "./環境";
+import { 部品を組み立てる } from "./組み立て";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 文字列, 新しい例外, 未定義, 真 } from "../共通/型";
 import type { 不明, 記録 } from "../共通/型";
-import { 否定, 等しい } from "../共通/演算";
 import { しくじる, もし } from "../共通/構文";
+import { 否定, 等しい } from "../共通/演算";
 import { 揃える } from "../共通/約束";
 
 /**

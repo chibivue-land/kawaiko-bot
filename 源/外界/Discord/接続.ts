@@ -1,20 +1,22 @@
 import { DurableObject } from "cloudflare:workers";
 
-import { 失敗を要約する } from "../../振る舞い/接続口";
-import { 名指しに返事する } from "../../振る舞い/返信";
-import { メンションを取り除く, 名指しされたか } from "../../核/発言";
-import { 添付の印 } from "../../核/添付";
-import { ISO時刻, エポックミリ秒, 現在時刻 } from "../../核/時刻";
-import { 定型文を選ぶ, 異常の文 } from "../../核/定型文";
+import type { 環境 } from "../環境";
 import { 部品を組み立てる } from "../組み立て";
 import { 添付に直す, 表示名 } from "./通信";
 import type { 生の添付 } from "./通信";
-import type { 環境 } from "../環境";
 
+import { 失敗を要約する } from "../../振る舞い/接続口";
 import type { 部品一式 } from "../../振る舞い/接続口";
+import { 名指しに返事する } from "../../振る舞い/返信";
+
+import { 定型文を選ぶ, 異常の文 } from "../../核/定型文";
+import { ISO時刻, エポックミリ秒, 現在時刻 } from "../../核/時刻";
+import { 添付の印 } from "../../核/添付";
+import { メンションを取り除く, 名指しされたか } from "../../核/発言";
+
 import { 偽, 数値, 文字列, 未定義, 真, 真偽, 空 } from "../../共通/型";
 import type { 一部, 不明, 無, 省略可, 約束, 読み取り専用配列 } from "../../共通/型";
-import { 写す, 切り出す, 前後の空白を落とす, 空か, 絞る, 繋ぐ, 長さ } from "../../共通/関数";
+import { もし, 場合分け, 振り分ける, 試す, 試みる } from "../../共通/構文";
 import {
   ビット和,
   否定,
@@ -25,9 +27,9 @@ import {
   引く,
   足す,
 } from "../../共通/演算";
-import { もし, 場合分け, 振り分ける, 試す, 試みる } from "../../共通/構文";
-import { 注意, 異常, 記す } from "../../共通/記録";
 import { すぐ返す, 何もしない } from "../../共通/約束";
+import { 注意, 異常, 記す } from "../../共通/記録";
+import { 写す, 切り出す, 前後の空白を落とす, 空か, 絞る, 繋ぐ, 長さ } from "../../共通/関数";
 
 /**
  * Durable Object に住む Discord Gateway クライアント．

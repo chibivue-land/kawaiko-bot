@@ -7,6 +7,7 @@
  * ものだけ「あと何分」に置き換わる．
  */
 import 定型文 from "./定型文.json";
+
 import { 数値, 数学, 文字列 } from "../共通/型";
 import type { 省略可, 読み取り専用配列 } from "../共通/型";
 import { 長さ } from "../共通/関数";

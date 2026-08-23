@@ -7,9 +7,15 @@
  * すべて best-effort — 失敗しても「裏取り無しの返事」に落ちるだけ．
  */
 import type { 調査係 } from "../振る舞い/接続口";
+
 import { 検索語を取り出す, 調べる価値があるか } from "../核/問いかけ";
+
 import { 数値, 文字列, 未定義, 空 } from "../共通/型";
 import type { 省略可, 約束, 記録, 配列 } from "../共通/型";
+import { 改行 } from "../共通/文字";
+import { もし, 試みる } from "../共通/構文";
+import { 否定, 等しい, 等しくない } from "../共通/演算";
+import { すぐ返す, 揃える } from "../共通/約束";
 import {
   写す,
   切り出す,
@@ -22,10 +28,6 @@ import {
   繋ぐ,
   置き換える,
 } from "../共通/関数";
-import { 否定, 等しい, 等しくない } from "../共通/演算";
-import { もし, 試みる } from "../共通/構文";
-import { 改行 } from "../共通/文字";
-import { すぐ返す, 揃える } from "../共通/約束";
 
 const 待てる時間 = 4000;
 const 名乗り = "kawaiko-bot/1.0 (+https://github.com/chibivue-land/kawaiko-bot)";

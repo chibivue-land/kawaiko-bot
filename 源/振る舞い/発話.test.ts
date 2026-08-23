@@ -1,8 +1,11 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
-import { 発話する, 重複を避けて発話する } from "./発話";
 import type { 発話の結果, 発話器 } from "./接続口";
+import { 発話する, 重複を避けて発話する } from "./発話";
+
 import { 人格指示書を組み立てる } from "../核/人格";
 import { 受け流しの文, 反復打ち切りの文, 拒否の文, 無言の文 } from "../核/定型文";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 新しい例外, 真 } from "../共通/型";
 import type { 約束 } from "../共通/型";
 

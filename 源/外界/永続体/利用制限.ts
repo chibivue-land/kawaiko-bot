@@ -1,10 +1,13 @@
 import { DurableObject } from "cloudflare:workers";
+
 import type { 利用制限の判定 } from "../../振る舞い/接続口";
+
 import { 現在時刻 } from "../../核/時刻";
+
 import { 偽, 数値, 数学, 真 } from "../../共通/型";
 import type { 省略可, 約束 } from "../../共通/型";
-import { 以上, 等しい } from "../../共通/演算";
 import { 振り分ける } from "../../共通/構文";
+import { 以上, 等しい } from "../../共通/演算";
 
 /**
  * 利用者ごとの制限．idFromName(Discord のユーザー id) で 1 人 1 インスタンス．
