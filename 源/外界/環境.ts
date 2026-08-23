@@ -51,6 +51,9 @@ export interface 環境 {
   // bindings
   推論: Ai;
 
+  /** 貼られた URL を読むためのブラウザ (Browser Run)． */
+  閲覧: BrowserRun;
+
   利用制限帳: DurableObjectNamespace<利用制限帳>;
 
   予算帳: DurableObjectNamespace<予算帳>;
