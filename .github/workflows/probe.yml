@@ -16,7 +16,9 @@ name: Probe
 on:
   workflow_dispatch:
     inputs:
-      口:
+      # 入力名は ASCII でないと GitHub がワークフローごと読めない
+      # (wrangler.jsonc の鍵と同じで，これは identifier ではなく向こうと握手する名前)。
+      kind:
         description: "覗く口"
         type: choice
         default: ask
@@ -46,4 +48,4 @@ jobs:
         env:
           TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
           Q: ${{ inputs.q }}
-          KUCHI: ${{ inputs.口 }}
+          KUCHI: ${{ inputs.kind }}
