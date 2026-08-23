@@ -2,12 +2,18 @@
  * 会話を持続的な事実へ変える部分 — 抽出の指示文と，返ってきたものの読み取り．
  * 純粋．モデルを呼ぶのは 振る舞い/学習実行.ts の仕事．
  */
-import type { 学習した事実, 観測 } from "./記憶";
-import { 差し込む } from "./指示文";
-import 抽出の指示 from "./学習-抽出指示.md?raw";
 import 依頼のひな型 from "./学習-依頼.md?raw";
+import 抽出の指示 from "./学習-抽出指示.md?raw";
+
+import { 差し込む } from "./指示文";
+import type { 学習した事実, 観測 } from "./記憶";
+
+import { 各要素に } from "../共通/反復";
 import { 対応表, 文字列, 新しい対応表, 新しい集合, 未定義, 空 } from "../共通/型";
 import type { 省略可, 読み取り専用対応表, 読み取り専用配列, 配列 } from "../共通/型";
+import { 改行 } from "../共通/文字";
+import { もし } from "../共通/構文";
+import { 等しくない } from "../共通/演算";
 import {
   写す,
   分ける,
@@ -21,10 +27,6 @@ import {
   置き換える,
   長さ,
 } from "../共通/関数";
-import { 等しくない } from "../共通/演算";
-import { もし } from "../共通/構文";
-import { 各要素に } from "../共通/反復";
-import { 改行 } from "../共通/文字";
 
 /** 1 回で覚える事実の数．kawaiko は百科事典を作っているのではない． */
 export const 一度に学ぶ事実の数 = 3;

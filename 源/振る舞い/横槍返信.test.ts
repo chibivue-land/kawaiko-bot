@@ -1,6 +1,8 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { 横槍を入れる, 絡む相手を選ぶ } from "./横槍返信";
+
 import { 決め打ちの現在, 偽の部品一式を作る, 発言を作る } from "../試験/偽物";
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 偽, 新しい例外, 未定義, 真 } from "../共通/型";
 
 const 現在 = 決め打ちの現在.epochMilliseconds;

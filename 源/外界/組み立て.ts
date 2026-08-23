@@ -1,16 +1,19 @@
-import type { チャンネル記録, 予算番, 利用制限, 提供者の記録, 部品一式 } from "../振る舞い/接続口";
-import { 現在時刻 } from "../核/時刻";
 import { Gemini提供者 } from "./AI/Gemini";
 import { WorkersAI提供者 } from "./AI/WorkersAI";
 import { WorkersAIの絵描き } from "./AI/絵";
 import { モデル一覧を読む, 順に試す発話器 } from "./AI/選択";
 import { D1の記憶庫, 記憶なし } from "./D1/記憶庫";
 import { Discordのチャット } from "./Discord/通信";
-import { RSSの見出し } from "./見出し";
 import { webの添付読み } from "./添付";
-import { BrowserRunの頁読み, 頁読みなし } from "./頁";
-import { webの調査係 } from "./調査";
 import { 月の予算ドル, type 環境 } from "./環境";
+import { RSSの見出し } from "./見出し";
+import { webの調査係 } from "./調査";
+import { BrowserRunの頁読み, 頁読みなし } from "./頁";
+
+import type { チャンネル記録, 予算番, 利用制限, 提供者の記録, 部品一式 } from "../振る舞い/接続口";
+
+import { 現在時刻 } from "../核/時刻";
+
 import { 数値, 数学, 未定義 } from "../共通/型";
 import { 等しくない } from "../共通/演算";
 import { 約束に均す } from "../共通/約束";

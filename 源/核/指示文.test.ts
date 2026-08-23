@@ -1,8 +1,10 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
-import { 回避節, 差し込む, 抑揚節, 文体節, 節をつなぐ, 記憶節 } from "./指示文";
-import { 回避する件数 } from "./反復";
 import { 返しの型一覧, 返しの長さ一覧 } from "./人格";
+import { 回避する件数 } from "./反復";
+import { 回避節, 差し込む, 抑揚節, 文体節, 節をつなぐ, 記憶節 } from "./指示文";
 import type { 事実 } from "./記憶";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 未定義, 空 } from "../共通/型";
 
 const 事実を作る = (上書き: Partial<事実> = {}): 事実 => ({

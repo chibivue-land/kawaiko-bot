@@ -1,8 +1,18 @@
 import "./続き";
+
 import { and, asc, desc, eq, gt, sql } from "drizzle-orm";
 import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 
+import {
+  記憶の出来事,
+  観測表,
+  生きている事実 as 生きている事実ビュー,
+  生きている学習の回,
+} from "./定義";
+
 import { 失敗を要約する, type 記憶庫 } from "../../振る舞い/接続口";
+
+import { 現在時刻 } from "../../核/時刻";
 import {
   取り込み方を決める,
   事実本文を整える,
@@ -14,21 +24,15 @@ import {
   type 観測,
   type 観測の入力,
 } from "../../核/記憶";
-import { 現在時刻 } from "../../核/時刻";
+
+import { 取り次ぐ } from "../../共通/取り次ぎ";
 import { 偽, 数値, 文字列, 未定義, 真, 真偽, 空 } from "../../共通/型";
 import type { 無, 省略可, 約束, 読み取り専用配列, 配列 } from "../../共通/型";
-import { 写す, 空か, 絞る, 長さ } from "../../共通/関数";
-import { 等しい, 等しくない } from "../../共通/演算";
 import { もし, 試みる } from "../../共通/構文";
-import { 注意 } from "../../共通/記録";
-import { 取り次ぐ } from "../../共通/取り次ぎ";
-import {
-  記憶の出来事,
-  観測表,
-  生きている事実 as 生きている事実ビュー,
-  生きている学習の回,
-} from "./定義";
+import { 等しい, 等しくない } from "../../共通/演算";
 import { すぐ返す } from "../../共通/約束";
+import { 注意 } from "../../共通/記録";
+import { 写す, 空か, 絞る, 長さ } from "../../共通/関数";
 
 /**
  * Drizzle 経由で D1 に載る記憶庫．

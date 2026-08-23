@@ -10,11 +10,12 @@
  * 畳み込む SQL は 移行/0001_記憶ログ.sql にある．
  */
 import { 反復度 } from "./反復";
+
 import { 偽, 数値, 文字列, 未定義, 真偽, 空 } from "../共通/型";
 import type { 省略可, 読み取り専用配列 } from "../共通/型";
-import { 写す, 切り出す, 前後の空白を落とす, 畳む, 空か, 絞る } from "../共通/関数";
-import { 以上, 等しい, 等しくない } from "../共通/演算";
 import { もし } from "../共通/構文";
+import { 以上, 等しい, 等しくない } from "../共通/演算";
+import { 写す, 切り出す, 前後の空白を落とす, 畳む, 空か, 絞る } from "../共通/関数";
 
 export type 主語の種別 = "user" | "topic" | "channel" | "server";
 

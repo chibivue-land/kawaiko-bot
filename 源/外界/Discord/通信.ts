@@ -1,7 +1,10 @@
-import type { チャット } from "../../振る舞い/接続口";
-import type { 発言 } from "../../核/発言";
-import type { 添付 } from "../../核/添付";
 import type { 環境 } from "../環境";
+
+import type { チャット } from "../../振る舞い/接続口";
+
+import type { 添付 } from "../../核/添付";
+import type { 発言 } from "../../核/発言";
+
 import {
   偽,
   応答,
@@ -16,10 +19,10 @@ import {
   空,
 } from "../../共通/型";
 import type { 無, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../../共通/型";
-import { 写す, 切り出す, 長さ } from "../../共通/関数";
 import { しくじる, もし, 試みる } from "../../共通/構文";
-import { 注意 } from "../../共通/記録";
 import { すぐ返す } from "../../共通/約束";
+import { 注意 } from "../../共通/記録";
+import { 写す, 切り出す, 長さ } from "../../共通/関数";
 
 /**
  * Discord の REST API を，チャットのポートへ合わせたもの．

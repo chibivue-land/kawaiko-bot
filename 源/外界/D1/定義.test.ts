@@ -1,7 +1,11 @@
-import { 仕様, 検証, 期待 } from "../../試験/言葉";
 import { getTableConfig } from "drizzle-orm/sqlite-core";
-import { 記憶の出来事, 観測表 } from "./定義";
+
 import 移行のSQL from "../../../移行/0001_記憶ログ.sql?raw";
+
+import { 記憶の出来事, 観測表 } from "./定義";
+
+import { 仕様, 検証, 期待 } from "../../試験/言葉";
+
 import { 新しい型, 新しい集合, 真 } from "../../共通/型";
 import { 等しい } from "../../共通/演算";
 

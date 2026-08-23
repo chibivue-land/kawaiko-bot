@@ -12,16 +12,18 @@
 import { 失敗を要約する } from "./接続口";
 import type { 描いた絵, 部品一式 } from "./接続口";
 import type { 届いた名指し } from "./返信";
+
 import { 作画の指示書を組み立てる, 作画の返事を読み取る, 作画依頼を組み立てる } from "../核/作画";
 import type { 描く頼み } from "../核/作画";
 import { 作画しくじりの文, 定型文を選ぶ } from "../核/定型文";
+
 import { 偽, 数値, 文字列, 未定義, 真, 真偽 } from "../共通/型";
 import type { 不明, 無, 省略可, 約束 } from "../共通/型";
-import { 切り出す, 空か, 置き換える, 長さ } from "../共通/関数";
-import { 等しい, 足す } from "../共通/演算";
 import { もし, 試みる } from "../共通/構文";
+import { 等しい, 足す } from "../共通/演算";
 import { すぐ返す } from "../共通/約束";
 import { 注意 } from "../共通/記録";
+import { 切り出す, 空か, 置き換える, 長さ } from "../共通/関数";
 
 /** 一言が空だったときに添える言葉．無言で絵だけ置くのは kawaiko らしくない． */
 const 既定の一言 = "描いた";

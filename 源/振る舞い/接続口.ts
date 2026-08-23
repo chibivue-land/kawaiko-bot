@@ -6,15 +6,17 @@
  * 入口.ts が行う．依存は内向き: このファイルは 外界/ を import してはならず，
  * 核/ はこのファイルを import してはならない．
  */
-import type { 発言 } from "../核/発言";
-import type { 添付 } from "../核/添付";
 import type { 担当 } from "../核/予定";
+import type { 読んだ頁 } from "../核/参照";
 import type { Temporal } from "../核/時刻";
+import type { 添付 } from "../核/添付";
+import type { 発言 } from "../核/発言";
 import type { 取り込み結果, 学習の回, 学習した事実, 事実, 観測, 観測の入力 } from "../核/記憶";
+
 import { 例外, 数値, 文字列, 真偽 } from "../共通/型";
 import type { 不明, 無, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../共通/型";
-import { 前後の空白を落とす } from "../共通/関数";
 import { もし, 試す } from "../共通/構文";
+import { 前後の空白を落とす } from "../共通/関数";
 
 export type 思考の深さ = "low" | "medium" | "high";
 
@@ -202,19 +204,14 @@ export interface 添付読み {
   画像を取り込む(添付: 添付): 約束<省略可<取り込んだ画像>>;
 }
 
-/** 読んできた 1 ページ． */
-export interface 読んだ頁 {
-  場所: 文字列;
-  /** markdown に均した中身． */
-  中身: 文字列;
-}
-
 /**
  * 貼られた URL の先を読む口．
  *
  * 実体は Cloudflare の Browser Run — 本物のブラウザで開いて markdown にする．
  * JS で組み立てるページも読めるのが，素の fetch との違い．
  */
+export type { 読んだ頁 };
+
 export interface 頁読み {
   /** 読めない構成なら false．呼び出し側は丸ごと省略してよい． */
   readonly 使えるか: 真偽;

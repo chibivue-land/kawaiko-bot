@@ -6,14 +6,16 @@
  * `image_url` に data URI を入れる — で渡す．どのモデルが見られるかは
  * 目のあるモデル に列挙してある．
  */
-import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
 import type { モデル提供者 } from "./提供者";
 import { 概算費用ドル } from "./料金";
+
+import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
+
 import { 偽, 数値, 文字列 } from "../../共通/型";
 import type { 不明, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../../共通/型";
-import { 一覧に含む, 写す, 前後の空白を落とす, 空か, 置き換える } from "../../共通/関数";
-import { 否定 } from "../../共通/演算";
 import { もし } from "../../共通/構文";
+import { 否定 } from "../../共通/演算";
+import { 一覧に含む, 写す, 前後の空白を落とす, 空か, 置き換える } from "../../共通/関数";
 
 export function WorkersAI提供者(ai: Ai): モデル提供者 {
   // env.AI.run は組み込みモデル一覧で型が付いている．任意の id 用に広げる．

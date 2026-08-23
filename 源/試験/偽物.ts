@@ -10,13 +10,15 @@ import type {
   部品一式,
   提供者の休み,
 } from "../振る舞い/接続口";
+
+import { Temporal } from "../核/時刻";
 import type { 発言 } from "../核/発言";
 import type { 事実, 学習した事実, 観測 } from "../核/記憶";
-import { Temporal } from "../核/時刻";
+
+import { 各要素に } from "../共通/反復";
 import { 偽, 数値, 数学, 文字列, 未定義, 真, 真偽 } from "../共通/型";
 import type { 一部, 約束, 記録, 読み取り専用配列, 配列 } from "../共通/型";
 import { 末尾に足す, 長さ } from "../共通/関数";
-import { 各要素に } from "../共通/反復";
 
 /**
  * ポートすべての，記憶上の身代わり．
