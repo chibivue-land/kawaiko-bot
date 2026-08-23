@@ -15,8 +15,8 @@ import type { 読んだ頁, 頁読み } from "../振る舞い/接続口";
 
 import { 偽, 文字列, 未定義, 真 } from "../共通/型";
 import type { 省略可, 約束 } from "../共通/型";
-import { もし, 試みる } from "../共通/構文";
-import { 否定 } from "../共通/演算";
+import { もし, 試す, 試みる } from "../共通/構文";
+import { 否定, 等しい } from "../共通/演算";
 import { すぐ返す, 約束に均す } from "../共通/約束";
 import { 注意 } from "../共通/記録";
 import { 切り出す, 前後の空白を落とす, 空か } from "../共通/関数";
@@ -61,11 +61,33 @@ export function BrowserRunの頁読み(browser: BrowserRun): 頁読み {
 }
 
 function 頁にする(場所: 文字列, 生: 文字列): 省略可<読んだ頁> {
-  const 中身 = 前後の空白を落とす(生);
+  const 中身 = 前後の空白を落とす(封筒を剥がす(生));
 
   return もし(空か(中身), {
     であれば: (): 省略可<読んだ頁> => 未定義,
     でなければ: (): 省略可<読んだ頁> => ({ 場所, 中身: 切り出す(中身, 0, 頁の載せる文字数) }),
+  });
+}
+
+/**
+ * Quick Action は markdown を JSON の封筒に入れて返す．
+ *
+ * `{"success":true,"result":"---\ntitle: ..."}` をそのまま指示文へ入れると，
+ * モデルはエスケープされた JSON を読む羽目になり，載せられる中身も封筒のぶん
+ * 減る．中の result だけ取り出す．封筒でなければ素のまま使う．
+ */
+function 封筒を剥がす(生: 文字列): 文字列 {
+  return 試す({
+    実行: () => {
+      const 中身 = (JSON.parse(生) as { result?: 省略可<文字列> }).result;
+
+      return もし(等しい(typeof 中身, "string"), {
+        であれば: () => 中身!,
+        でなければ: () => 生,
+      });
+    },
+    // JSON でないなら，そのまま markdown だったということ．
+    しくじったら: () => 生,
   });
 }
 
