@@ -1,6 +1,7 @@
 import { Gemini提供者 } from "./AI/Gemini";
 import { WorkersAI提供者 } from "./AI/WorkersAI";
 import { WorkersAIの絵描き } from "./AI/絵";
+import { WorkersAIの道案内 } from "./AI/道案内";
 import { モデル一覧を読む, 順に試す発話器 } from "./AI/選択";
 import { D1の記憶庫, 記憶なし } from "./D1/記憶庫";
 import { Discordのチャット } from "./Discord/通信";
@@ -92,6 +93,7 @@ export function 部品を組み立てる(環境: 環境): 部品一式 {
     チャンネル記録,
 
     調査係: webの調査係({ GitHubのトークン: 環境.GITHUB_API_TOKEN }),
+    道案内: WorkersAIの道案内(環境.推論),
     絵描き: WorkersAIの絵描き(環境.推論),
     添付読み: webの添付読み(),
     頁読み: 環境.閲覧 ? BrowserRunの頁読み(環境.閲覧) : 頁読みなし,
