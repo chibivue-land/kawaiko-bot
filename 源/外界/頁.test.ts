@@ -52,6 +52,25 @@ function 束縛もどき(応答: Response): BrowserRun {
     });
   });
 
+  検証("JSON の封筒は剥がして，中の markdown だけ渡す", () => {
+    // そのまま入れると，モデルがエスケープされた JSON を読む羽目になる．
+    const 封筒 = JSON.stringify({ success: 真, result: "# 見出し\n\n本文" });
+
+    return BrowserRunの頁読み(束縛もどき(新しい応答(封筒)))
+      .読む("https://example.com/a")
+      .んで((頁) => {
+        期待(頁!.中身).である("# 見出し\n\n本文");
+      });
+  });
+
+  検証("封筒でなければ素のまま使う", () => {
+    return BrowserRunの頁読み(束縛もどき(新しい応答("# 素の markdown")))
+      .読む("https://example.com/a")
+      .んで((頁) => {
+        期待(頁!.中身).である("# 素の markdown");
+      });
+  });
+
   検証("中身が空なら，読めなかったことにする", () => {
     return BrowserRunの頁読み(束縛もどき(新しい応答("   ")))
       .読む("https://example.com/a")
