@@ -107,7 +107,7 @@ kawaiko に会話 DB は無く，**チャンネルの直近ログそのものが
                                       はい
                                        ▼
                               決まった検索語で引く
-                        (Wikipedia / News / GitHub / HN)
+                (Bing を Browser Run で / News / GitHub / HN)
                                        │
                                        ▼
                     有望な先を Browser Run で開いて markdown で読む

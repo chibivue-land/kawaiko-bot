@@ -92,7 +92,7 @@ export function 部品を組み立てる(環境: 環境): 部品一式 {
     利用制限,
     チャンネル記録,
 
-    調査係: webの調査係({ GitHubのトークン: 環境.GITHUB_API_TOKEN }),
+    調査係: webの調査係({ GitHubのトークン: 環境.GITHUB_API_TOKEN, 閲覧: 環境.閲覧 }),
     道案内: WorkersAIの道案内(環境.推論),
     絵描き: WorkersAIの絵描き(環境.推論),
     添付読み: webの添付読み(),
