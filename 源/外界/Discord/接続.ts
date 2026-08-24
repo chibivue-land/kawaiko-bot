@@ -139,6 +139,9 @@ interface 発言が来た {
   /** 返信のときに入る．kawaiko への返信に反応するのに使う． */
   referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | 空>;
 
+  /** 返信のとき，どの発言への返信か．連なりを遡る取っ掛かり． */
+  message_reference?: 省略可<{ message_id?: 省略可<文字列> } | 空>;
+
   attachments?: 省略可<読み取り専用配列<生の添付>>;
 }
 
@@ -460,6 +463,7 @@ export class Discord接続 extends DurableObject<環境> {
           相手の名前: 表示名(発言.author!, 発言.member?.nick),
           本文: メンションを取り除く(自分のid, 本文),
           添付一覧: 添付に直す(発言.attachments),
+          返信元の発言id: 発言.message_reference?.message_id ?? 未定義,
         }).んで((結末) =>
           this.状態を記録する({
             直前の名指し: {

@@ -8,7 +8,7 @@
  * Google News RSS (ja)，GitHub API，HN Algolia．
  * すべて best-effort — 失敗しても「裏取り無しの返事」に落ちるだけ．
  */
-import type { 調べた結果, 調査係 } from "../振る舞い/接続口";
+import type { 調べた一件, 調べた結果, 調査係 } from "../振る舞い/接続口";
 
 import { 数値, 文字列, 未定義, 真, 空 } from "../共通/型";
 import type { 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../共通/型";
@@ -35,12 +35,8 @@ import {
 const 待てる時間 = 4000;
 const 名乗り = "kawaiko-bot/1.0 (+https://github.com/chibivue-land/kawaiko-bot)";
 
-export interface 調べもの {
-  題: 文字列;
-  抜粋: 文字列;
-  /** さらに開いて読める先．拾えたときだけ． */
-  場所?: 省略可<文字列>;
-}
+/** 集め先ごとの 1 件．形は核の 調べた一件 そのもの (核/探索.ts)． */
+export type 調べもの = 調べた一件;
 
 /** ざっくり HTML/XML を落として実体参照を戻す． */
 function タグを落とす(生: 文字列): 文字列 {
@@ -341,6 +337,7 @@ function 結果にまとめる(一覧: 読み取り専用配列<調べもの>): 
       0,
       持ち帰る候補の数,
     ),
+    件一覧: 一覧,
   };
 }
 
@@ -361,4 +358,4 @@ export function webの調査係(設定: 調査の設定): 調査係 {
   };
 }
 
-const 空の結果: 調べた結果 = { 抜粋: "", 候補: [] };
+const 空の結果: 調べた結果 = { 抜粋: "", 候補: [], 件一覧: [] };
