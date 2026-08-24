@@ -1,4 +1,4 @@
-import {} from "./調査";
+import { Bingの結果を読む, Bingの行き先を解く } from "./調査";
 
 import { 検索語を取り出す, 調べる価値があるか } from "../核/問いかけ";
 
@@ -80,5 +80,46 @@ import { 偽, 真 } from "../共通/型";
 
   検証("削った結果が短すぎるなら元のまま返す", () => {
     期待(検索語を取り出す("あとは")).である("あとは");
+  });
+});
+
+仕様("Bingの行き先を解く", () => {
+  検証("ck/a の包みを素の行き先に戻す", () => {
+    // u=a1 の後ろは base64url．a1aHR0…= "https://example.com/docs"
+    期待(
+      Bingの行き先を解く(
+        "https://www.bing.com/ck/a?!&&p=deadbeef&u=a1aHR0cHM6Ly9leGFtcGxlLmNvbS9kb2Nz&ntb=1",
+      ),
+    ).である("https://example.com/docs");
+  });
+
+  検証("包まれていない行き先はそのまま", () => {
+    期待(Bingの行き先を解く("https://example.com/x")).である("https://example.com/x");
+  });
+
+  検証("解いても URL にならない包みは，包みのまま返す", () => {
+    // a1Zm9v の中身は "foo"．リンクとしては包みのままのほうがまだ飛べる．
+    期待(Bingの行き先を解く("https://www.bing.com/ck/a?u=a1Zm9v")).である(
+      "https://www.bing.com/ck/a?u=a1Zm9v",
+    );
+  });
+});
+
+仕様("Bingの結果を読む", () => {
+  const 見本 =
+    '<li class="b_algo"><h2 class=""><a target="_blank" href="https://www.bing.com/ck/a?!&amp;&amp;p=x&amp;u=a1aHR0cHM6Ly9leGFtcGxlLmNvbS9kb2Nz&amp;ntb=1">Example <strong>Docs</strong></a></h2><div class="b_caption"><p class="b_lineclamp2">説明文がここに入る。</p></div></li>';
+
+  検証("題・抜粋・行き先を拾い，リンクの包みも解く", () => {
+    期待(Bingの結果を読む({ result: [{ results: [{ html: 見本 }] }] })).と等しい([
+      { 題: "Web: Example Docs", 抜粋: "説明文がここに入る。", 場所: "https://example.com/docs" },
+    ]);
+  });
+
+  検証("見出しの無い要素 (広告など) は落とす", () => {
+    期待(Bingの結果を読む({ result: [{ results: [{ html: "<li>広告</li>" }] }] })).と等しい([]);
+  });
+
+  検証("封筒が空でも転ばない", () => {
+    期待(Bingの結果を読む({})).と等しい([]);
   });
 });
