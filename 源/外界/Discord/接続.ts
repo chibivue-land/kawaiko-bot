@@ -125,8 +125,23 @@ interface 発言が来た {
 
   mentions?: 省略可<Array<{ id: 文字列 }>>;
 
-  /** 返信のときに入る．kawaiko への返信に反応するのに使う． */
-  referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | 空>;
+  /**
+   * 返信のときに入る．kawaiko への返信に反応するのと，jev 命令の判定対象
+   * (返信先の発言) に使う．
+   */
+  referenced_message?: 省略可<
+    | {
+        content?: 省略可<文字列>;
+        author?: 省略可<{
+          id: 文字列;
+
+          username?: 省略可<文字列>;
+
+          global_name?: 省略可<文字列 | 空>;
+        }>;
+      }
+    | 空
+  >;
 
   attachments?: 省略可<読み取り専用配列<生の添付>>;
 }
@@ -449,6 +464,7 @@ export class Discord接続 extends DurableObject<環境> {
           相手の名前: 表示名(発言.author!, 発言.member?.nick),
           本文: メンションを取り除く(自分のid, 本文),
           添付一覧: 添付に直す(発言.attachments),
+          返信先: 返信先を読む(発言),
         }).んで((結末) =>
           this.状態を記録する({
             直前の名指し: {
@@ -475,4 +491,14 @@ export class Discord接続 extends DurableObject<環境> {
       },
     });
   }
+}
+
+/** 返信先の発言．本文が読めるときだけ (消された発言や，本文の無い発言は未定義)． */
+function 返信先を読む(発言: 発言が来た): 省略可<{ 発言者名: 文字列; 本文: 文字列 }> {
+  const 返信先 = 発言.referenced_message;
+  const 本文 = 前後の空白を落とす(返信先?.content ?? "");
+
+  return 返信先?.author && 否定(空か(本文))
+    ? { 発言者名: 表示名(返信先.author), 本文: 切り出す(本文, 0, 2000) }
+    : 未定義;
 }

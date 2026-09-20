@@ -130,6 +130,8 @@ interface 生の発言 {
   author: 生の発言者;
   member?: 省略可<{ nick?: 省略可<文字列 | 空> }>;
   attachments?: 省略可<読み取り専用配列<生の添付>>;
+  /** 返信のときだけ入る． */
+  message_reference?: 省略可<{ message_id?: 省略可<文字列> } | 空>;
 }
 
 /** ニックネーム > 表示名 > ユーザー名．Discord が実際に見せている順． */
@@ -146,6 +148,7 @@ function 発言に直す(生: 生の発言): 発言 {
     発言者名: 表示名(生.author, 生.member?.nick),
     bot発言か: 真偽(生.author.bot),
     添付一覧: 添付に直す(生.attachments),
+    返信先id: 生.message_reference?.message_id,
   };
 }
 
