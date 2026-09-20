@@ -1,5 +1,3 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
-import { 空 } from "../共通/型";
 import {
   事実の最大長,
   事実本文を整える,
@@ -7,6 +5,10 @@ import {
   type 事実,
   type 学習した事実,
 } from "./記憶";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
+import { 空 } from "../共通/型";
 
 const 既知の事実 = (上書き: Partial<事実> = {}): 事実 => ({
   連番: 7,

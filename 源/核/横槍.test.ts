@@ -1,7 +1,9 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
-import { 横槍の状態, 絡む相手を決める, type 見立てた候補 } from "./横槍";
 import type { 答え一覧 } from "./判定";
+import { 横槍の状態, 絡む相手を決める, type 見立てた候補 } from "./横槍";
+
 import { 発言を作る } from "../試験/偽物";
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 未定義 } from "../共通/型";
 
 function 答えを作る(絡みがい: number, そっとしておく: number): 答え一覧 {

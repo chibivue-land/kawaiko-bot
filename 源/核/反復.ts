@@ -1,9 +1,9 @@
+import { 各要素に } from "../共通/反復";
 import { 数値, 数学, 文字列, 新しい対応表, 真偽 } from "../共通/型";
 import type { 読み取り専用配列, 配列 } from "../共通/型";
-import { 写す, 空か, 長さ } from "../共通/関数";
-import { 以上, 等しい } from "../共通/演算";
 import { もし } from "../共通/構文";
-import { 各要素に } from "../共通/反復";
+import { 以上, 等しい } from "../共通/演算";
+import { 写す, 空か, 長さ } from "../共通/関数";
 /**
  * kawaiko が同じことを言い続けるのを出力側で止める決定的なガード．
  *

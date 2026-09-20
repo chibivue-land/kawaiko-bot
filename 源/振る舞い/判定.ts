@@ -6,13 +6,15 @@
  * 見立てへ落ちるだけ．だからここから外へは何も投げない．
  */
 import type { 判定の結果, 部品一式 } from "./接続口";
+
 import type { 問い, 答え一覧 } from "../核/判定";
+
 import { 文字列, 未定義, 真偽 } from "../共通/型";
 import type { 省略可, 約束, 記録 } from "../共通/型";
-import { 等しい } from "../共通/演算";
 import { もし, 試みる } from "../共通/構文";
-import { 注意 } from "../共通/記録";
+import { 等しい } from "../共通/演算";
 import { すぐ返す } from "../共通/約束";
+import { 注意 } from "../共通/記録";
 
 /** 訊いて，費用を計上して，結果まるごと返す．取れなければ未定義． */
 export function 判定を仰ぐ(

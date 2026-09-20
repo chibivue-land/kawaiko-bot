@@ -1,5 +1,8 @@
 import { 偽, 文字列, 新しい対応表, 真偽 } from "../共通/型";
 import type { 配列 } from "../共通/型";
+import { 改行 } from "../共通/文字";
+import { もし } from "../共通/構文";
+import { 以上 } from "../共通/演算";
 import {
   いずれか,
   写す,
@@ -12,9 +15,6 @@ import {
   置き換える,
   長さ,
 } from "../共通/関数";
-import { 以上 } from "../共通/演算";
-import { もし } from "../共通/構文";
-import { 改行 } from "../共通/文字";
 /**
  * 指示書の丸写しを出力側で止める決定的なガード．
  *

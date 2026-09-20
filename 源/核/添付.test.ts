@@ -1,4 +1,4 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
+import { 添付節 } from "./指示文";
 import {
   大きさの表示,
   文書の上限バイト,
@@ -9,7 +9,9 @@ import {
   画像の上限バイト,
   type 添付,
 } from "./添付";
-import { 添付節 } from "./指示文";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 繰り返す, 長さ } from "../共通/関数";
 
 function 添付を作る(差分: Partial<添付> = {}): 添付 {

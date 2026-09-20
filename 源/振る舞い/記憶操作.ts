@@ -5,10 +5,11 @@
  * 復元も消失も起きないから，深夜に携帯から叩いても安全．
  */
 import type { 部品一式 } from "./接続口";
+
 import { 偽, 数値, 文字列, 真, 真偽 } from "../共通/型";
 import type { 不明, 省略可, 約束 } from "../共通/型";
-import { 否定 } from "../共通/演算";
 import { もし, 場合分け } from "../共通/構文";
+import { 否定 } from "../共通/演算";
 import { すぐ返す, 揃える } from "../共通/約束";
 
 export type 記憶への問い =

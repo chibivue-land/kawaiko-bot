@@ -1,7 +1,9 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { 信用できる場所か } from "./添付";
-import { 偽, 真 } from "../共通/型";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 各要素に } from "../共通/反復";
+import { 偽, 真 } from "../共通/型";
 
 仕様("信用できる場所か", () => {
   検証("Discord の CDN は取りに行く", () => {

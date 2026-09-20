@@ -1,15 +1,21 @@
-import type { チャンネル記録, 予算番, 利用制限, 提供者の記録, 部品一式 } from "../振る舞い/接続口";
-import { 現在時刻 } from "../核/時刻";
 import { Gemini提供者 } from "./AI/Gemini";
 import { Jevの判定器, 判定なし } from "./AI/Jev";
 import { WorkersAI提供者 } from "./AI/WorkersAI";
+import { WorkersAIの絵描き } from "./AI/絵";
+import { WorkersAIの道案内 } from "./AI/道案内";
 import { モデル一覧を読む, 既定の熟考のモデル一覧, 順に試す発話器 } from "./AI/選択";
 import { D1の記憶庫, 記憶なし } from "./D1/記憶庫";
 import { Discordのチャット } from "./Discord/通信";
-import { RSSの見出し } from "./見出し";
 import { webの添付読み } from "./添付";
-import { webの調査係 } from "./調査";
 import { 月の予算ドル, type 環境 } from "./環境";
+import { RSSの見出し } from "./見出し";
+import { webの調査係 } from "./調査";
+import { BrowserRunの頁読み, 頁読みなし } from "./頁";
+
+import type { チャンネル記録, 予算番, 利用制限, 提供者の記録, 部品一式 } from "../振る舞い/接続口";
+
+import { 現在時刻 } from "../核/時刻";
+
 import { 数値, 数学, 未定義 } from "../共通/型";
 import { 等しい, 等しくない } from "../共通/演算";
 import { 約束に均す } from "../共通/約束";
@@ -93,8 +99,11 @@ export function 部品を組み立てる(環境: 環境): 部品一式 {
     利用制限,
     チャンネル記録,
 
-    調査係: webの調査係({ GitHubのトークン: 環境.GITHUB_API_TOKEN }),
+    調査係: webの調査係({ GitHubのトークン: 環境.GITHUB_API_TOKEN, 閲覧: 環境.閲覧 }),
+    道案内: WorkersAIの道案内(環境.推論),
+    絵描き: WorkersAIの絵描き(環境.推論),
     添付読み: webの添付読み(),
+    頁読み: 環境.閲覧 ? BrowserRunの頁読み(環境.閲覧) : 頁読みなし,
     見出し取得: RSSの見出し,
 
     自分のid: 環境.kawaikoのid,

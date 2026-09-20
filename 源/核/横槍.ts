@@ -14,14 +14,16 @@
  *
  * 問いの文面と閾値は隣の 横槍-問い.json にある．純粋．
  */
+import 定義 from "./横槍-問い.json";
+
 import { 段階の点数, 状態を書く, 真の確率, 閾値を超えるか, type 問い, type 答え一覧 } from "./判定";
 import type { 発言 } from "./発言";
-import 定義 from "./横槍-問い.json";
+
 import { 偽, 数値, 数学, 文字列, 未定義 } from "../共通/型";
 import type { 省略可, 記録, 読み取り専用配列 } from "../共通/型";
-import { いずれか, 写す, 探す, 畳む, 空か, 絞る, 長さ } from "../共通/関数";
-import { 否定, 等しくない } from "../共通/演算";
 import { もし } from "../共通/構文";
+import { 否定, 等しくない } from "../共通/演算";
+import { いずれか, 写す, 探す, 畳む, 空か, 絞る, 長さ } from "../共通/関数";
 
 export const 横槍の問い = 定義.問い as 記録<文字列, 問い>;
 

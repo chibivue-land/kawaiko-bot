@@ -1,5 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
+
 import { 現在時刻 } from "../../核/時刻";
+
 import { 数値 } from "../../共通/型";
 import type { 約束 } from "../../共通/型";
 

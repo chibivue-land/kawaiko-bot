@@ -3,15 +3,18 @@
  * ツール (グラウンディング) でブラウジングさせる．
  */
 import { GoogleGenAI } from "@google/genai";
-import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
+
 import type { モデル提供者 } from "./提供者";
 import { 概算費用ドル } from "./料金";
+
+import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
+
+import { 取り次ぐ } from "../../共通/取り次ぎ";
 import { 偽, 文字列, 未定義, 真 } from "../../共通/型";
 import type { 約束, 配列 } from "../../共通/型";
-import { 写す, 前後の空白を落とす, 空か } from "../../共通/関数";
-import { 等しい } from "../../共通/演算";
 import { もし } from "../../共通/構文";
-import { 取り次ぐ } from "../../共通/取り次ぎ";
+import { 等しい } from "../../共通/演算";
+import { 写す, 前後の空白を落とす, 空か } from "../../共通/関数";
 
 /**
  * 相手の入力の形．

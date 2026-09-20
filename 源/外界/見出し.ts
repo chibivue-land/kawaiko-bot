@@ -1,7 +1,13 @@
 import type { 見出し取得 } from "../振る舞い/接続口";
+
 import type { 見出しの種類 } from "../核/独言";
+
+import { 範囲 } from "../共通/反復";
 import { 数値, 数学, 文字列, 新しい集合 } from "../共通/型";
 import type { 約束, 記録, 読み取り専用配列, 配列 } from "../共通/型";
+import { もし, 試みる } from "../共通/構文";
+import { 否定, 等しくない } from "../共通/演算";
+import { すぐ返す, 揃える } from "../共通/約束";
 import {
   写す,
   前後の空白を落とす,
@@ -13,10 +19,6 @@ import {
   置き換える,
   長さ,
 } from "../共通/関数";
-import { 否定, 等しくない } from "../共通/演算";
-import { もし, 試みる } from "../共通/構文";
-import { 範囲 } from "../共通/反復";
-import { すぐ返す, 揃える } from "../共通/約束";
 
 /**
  * 独り言のお題で使う見出しの購読先 (どれも API キー不要の RSS / Atom)．

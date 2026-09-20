@@ -1,7 +1,10 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { Jevに問い合わせる } from "./Jev問い合わせ";
+
 import type { 答え一覧 } from "../核/判定";
+
 import { 偽の判定器を作る, 偽の部品一式を作る } from "../試験/偽物";
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 真 } from "../共通/型";
 
 仕様("Jevに問い合わせる", () => {

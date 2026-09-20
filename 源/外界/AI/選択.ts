@@ -16,6 +16,8 @@
  * 種類は数え上げられない．だから「失敗したら一律で休ませ，時間で復帰させる」．
  * 一時的な不調なら休み時間ぶん無料枠を取り逃すだけで，自力で戻ってくる．
  */
+import type { モデル提供者 } from "./提供者";
+
 import {
   失敗を要約する,
   type 提供者の休み,
@@ -24,10 +26,16 @@ import {
   type 発話の結果,
   type 発話器,
 } from "../../振る舞い/接続口";
+
 import { 現在時刻 } from "../../核/時刻";
-import type { モデル提供者 } from "./提供者";
+
+import { 順に畳む } from "../../共通/反復";
 import { 偽, 数値, 文字列, 新しい例外, 未定義 } from "../../共通/型";
 import type { 不明, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../../共通/型";
+import { しくじる, もし, 振り分ける, 試みる } from "../../共通/構文";
+import { 否定, 等しい, 等しくない, 足す } from "../../共通/演算";
+import { 約束に均す } from "../../共通/約束";
+import { 注意 } from "../../共通/記録";
 import {
   一覧に含む,
   写す,
@@ -38,11 +46,6 @@ import {
   絞る,
   長さ,
 } from "../../共通/関数";
-import { 否定, 等しい, 等しくない, 足す } from "../../共通/演算";
-import { しくじる, もし, 振り分ける, 試みる } from "../../共通/構文";
-import { 順に畳む } from "../../共通/反復";
-import { 注意 } from "../../共通/記録";
-import { 約束に均す } from "../../共通/約束";
 
 /**
  * 失敗した提供者を休ませる長さ．
@@ -231,9 +234,14 @@ async function 実際に投げる(
   });
 }
 
-/** Workers AI を先に (1 日の無料枠)，Gemini を控えに． */
+/**
+ * Workers AI を先に (1 日の無料枠)，Gemini を控えに．
+ *
+ * 視覚モデルは安いものより後ろに置いてある．普段の雑談に 27B は要らない．
+ * 画像が添えられている回だけ，試す順に並べる が前へ出す．
+ */
 export const 既定のモデル一覧 =
-  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite";
+  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,@cf/qwen/qwen3.8-27b,gemini-3.5-flash-lite";
 
 /**
  * 正解のある問いに先に当てるモデル．

@@ -1,6 +1,7 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
 import { Jevの答えを言う, Jev命令の中身を読む, Jev命令の使い方, Jev命令を読む } from "./Jev命令";
 import type { 問い } from "./判定";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
 
 仕様("Jev命令を読む", () => {
   検証("jev で始まらない発言は命令ではない", () => {

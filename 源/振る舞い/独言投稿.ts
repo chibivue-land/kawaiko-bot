@@ -2,9 +2,14 @@
  * 定期の独り言 — 誰も頼んでいないのに kawaiko が住処のチャンネルへ何か言う．
  * 確率ゲート，予算ゲート，そして生成 1 回．
  */
-import { 重複を避けて発話する } from "./発話";
-import { 失敗を要約する, type 実行結果, type 部品一式 } from "./接続口";
 import { 判定してもらう } from "./判定";
+import { 失敗を要約する, type 実行結果, type 部品一式 } from "./接続口";
+import { 重複を避けて発話する } from "./発話";
+
+import { 日本時間の時, 日本時間の表示 } from "../核/予定";
+import { 人格指示書を組み立てる } from "../核/人格";
+import { 回避する件数 } from "../核/反復";
+import { 乱心するか } from "../核/機嫌";
 import {
   お題の見出しの種類,
   お題を選ぶ,
@@ -15,18 +20,15 @@ import {
   見出しを切り出す,
   見出しを載せてよいか,
 } from "../核/独言";
-import { 人格指示書を組み立てる } from "../核/人格";
-import { 乱心するか } from "../核/機嫌";
-import { 日本時間の時, 日本時間の表示 } from "../核/予定";
-import { 回避する件数 } from "../核/反復";
 import { リセット後に絞る, 自分の直近発言を集める } from "../核/転記";
+
 import { 偽, 文字列, 未定義, 真, 真偽 } from "../共通/型";
 import type { 省略可, 約束, 配列 } from "../共通/型";
-import { 写す, 小数で書く, 絞る } from "../共通/関数";
-import { 否定 } from "../共通/演算";
 import { 振り分ける, 試みる } from "../共通/構文";
-import { 注意, 異常, 記す } from "../共通/記録";
+import { 否定 } from "../共通/演算";
 import { すぐ返す, 揃える } from "../共通/約束";
+import { 注意, 異常, 記す } from "../共通/記録";
+import { 写す, 小数で書く, 絞る } from "../共通/関数";
 
 export async function 独り言を投稿する(
   部品: 部品一式,

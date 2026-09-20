@@ -5,12 +5,13 @@
  * kawaiko が，時間帯によってどれくらい優しいか．文言はいつもどおり隣の .md に
  * あり，ここに書くのは「いつそれを差すか」だけ．
  */
-import 朝の機嫌 from "./機嫌-朝.md?raw";
 import 乱心の様子 from "./機嫌-乱心.md?raw";
+import 朝の機嫌 from "./機嫌-朝.md?raw";
+
 import { 偽, 数値, 数学, 文字列, 真偽 } from "../共通/型";
-import { 前後の空白を落とす } from "../共通/関数";
-import { かつ, より小さい, 以上, 否定 } from "../共通/演算";
 import { もし } from "../共通/構文";
+import { かつ, より小さい, 以上, 否定 } from "../共通/演算";
+import { 前後の空白を落とす } from "../共通/関数";
 
 export type 機嫌 = "上機嫌" | "いつも" | "乱心";
 

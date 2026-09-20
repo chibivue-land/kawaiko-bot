@@ -1,7 +1,11 @@
-import { 仕様, 検証, 期待, 偽装する } from "../../試験/言葉";
 import { Jevの判定器, 判定なし, 判定器の名前, 答えを読み取る, 線の上へ直す } from "./Jev";
-import type { 問い } from "../../核/判定";
+
 import type { 提供者の休み, 提供者の記録 } from "../../振る舞い/接続口";
+
+import type { 問い } from "../../核/判定";
+
+import { 仕様, 検証, 期待, 偽装する } from "../../試験/言葉";
+
 import { 文字列, 新しい例外, 真 } from "../../共通/型";
 import type { 不明, 記録 } from "../../共通/型";
 

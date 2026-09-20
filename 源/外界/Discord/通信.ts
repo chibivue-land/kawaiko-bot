@@ -1,13 +1,31 @@
-import type { チャット } from "../../振る舞い/接続口";
-import type { 発言 } from "../../核/発言";
-import type { 添付 } from "../../核/添付";
 import type { 環境 } from "../環境";
-import { 偽, 応答, 数値, 文字列, 新しい例外, 未定義, 真偽, 空 } from "../../共通/型";
-import type { 無, 省略可, 約束, 読み取り専用配列, 配列 } from "../../共通/型";
-import { 写す, 切り出す, 長さ } from "../../共通/関数";
+
+import type { チャット } from "../../振る舞い/接続口";
+
+import type { 添付 } from "../../核/添付";
+import type { 発言 } from "../../核/発言";
+
+import {
+  偽,
+  応答,
+  数値,
+  文字列,
+  新しい例外,
+  バイト列に戻す,
+  新しい塊,
+  新しい便,
+  未定義,
+  真,
+  真偽,
+  空,
+} from "../../共通/型";
+import type { 無, 省略可, 約束, 記録, 読み取り専用配列, 配列 } from "../../共通/型";
 import { しくじる, もし, 試みる } from "../../共通/構文";
-import { 注意 } from "../../共通/記録";
 import { すぐ返す } from "../../共通/約束";
+import { 打ち切るまで繰り返す } from "../../共通/反復";
+import { 注意 } from "../../共通/記録";
+import { 写す, 切り出す, 長さ } from "../../共通/関数";
+import { 等しい } from "../../共通/演算";
 
 /**
  * Discord の REST API を，チャットのポートへ合わせたもの．
@@ -43,10 +61,74 @@ export function Discordのチャット(環境: 環境): チャット {
       }).んで(() => 未定義);
     },
 
+    /**
+     * 絵を 1 枚，一言を添えて出す．
+     *
+     * ここだけ JSON ではなく multipart — Discord に画像を渡す道はこれしかない．
+     * Content-Type は付けない．境界文字列は fetch が自分で決めるので，こちらが
+     * 書くと壊れる．
+     */
+    絵を投稿する(チャンネルid, 本文, 絵, 返信先の発言id): 約束<無> {
+      const 便 = 新しい便();
+
+      便.append(
+        "payload_json",
+        JSON.stringify({
+          content: 文字数を収める(本文),
+          allowed_mentions: { parse: [], replied_user: 偽 },
+          ...(返信先の発言id ? { message_reference: { message_id: 返信先の発言id } } : {}),
+        }),
+      );
+      便.append("files[0]", 塊にする(絵.中身, 絵.種別), 絵.名前);
+
+      return 呼ぶ(環境, `/channels/${チャンネルid}/messages`, { method: "POST", body: 便 }).んで(
+        () => 未定義,
+      );
+    },
+
     直近の発言(チャンネルid, 上限 = 30): 約束<配列<発言>> {
       return 呼ぶ(環境, `/channels/${チャンネルid}/messages?limit=${上限}`, { method: "GET" })
         .んで((応答) => 応答.json())
         .んで((中身) => 写す(中身 as 生の発言[], 発言に直す));
+    },
+
+    /**
+     * 返信の親を 1 通ずつ遡る．Discord の API に連なりのまとめ取りは無い．
+     *
+     * 各往復は message_reference を見て次の親を決める．読めなくなったら
+     * (消された発言など) そこで打ち切り，読めた分を古い順で返す．
+     */
+    発言を辿る(チャンネルid, 発言id, 上限 = 5): 約束<配列<発言>> {
+      const 始まり: 辿りの途中 = { 一覧: [], 次のid: 発言id };
+
+      return 打ち切るまで繰り返す<辿りの途中>(上限, 始まり, (今) =>
+        もし<約束<{ 状態: 辿りの途中; 打ち切るか: 真偽 }>>(等しい(今.次のid, 未定義), {
+          であれば: () => すぐ返す({ 状態: 今, 打ち切るか: 真 }),
+          でなければ: () =>
+            試みる<{ 状態: 辿りの途中; 打ち切るか: 真偽 }>({
+              実行: () =>
+                呼ぶ(環境, `/channels/${チャンネルid}/messages/${今.次のid}`, { method: "GET" })
+                  .んで((応答) => 応答.json())
+                  .んで((中身) => {
+                    const 生 = 中身 as 生の発言;
+
+                    return {
+                      // 遡りながら先頭へ差すので，出来上がりは古い順．
+                      状態: {
+                        一覧: [発言に直す(生), ...今.一覧],
+                        次のid: 生.message_reference?.message_id,
+                      },
+                      打ち切るか: 偽,
+                    };
+                  }),
+              しくじったら: (躓き) => {
+                注意("Discord: 返信元を辿れなかった:", 文字列(躓き));
+
+                return { 状態: 今, 打ち切るか: 真 };
+              },
+            }),
+        }),
+      ).んで((途中) => 途中.一覧);
     },
 
     サーバーを引く(チャンネルid): 約束<省略可<文字列>> {
@@ -83,15 +165,32 @@ export function Discordのチャット(環境: 環境): チャット {
   };
 }
 
+/**
+ * base64 の中身を，送り出せる塊に戻す．
+ *
+ * 戻すのはランタイムに任せる (共通/型.ts の バイト列に戻す)．`atob` して 1 文字ずつ
+ * 写す書き方でも動くが，600 KB の絵で 5 ms 掛かった (workerd で実測)．
+ * 無料枠の CPU をそんなことに使う理由は無い．
+ */
+function 塊にする(中身: 文字列, 種別: 文字列): Blob {
+  return 新しい塊([バイト列に戻す(中身)], { type: 種別 });
+}
+
 function 呼ぶ(環境: 環境, 経路: 文字列, 設定: RequestInit): 約束<応答> {
-  return fetch(`${基点}${経路}`, {
-    ...設定,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bot ${環境.DISCORD_BOT_TOKEN}`,
-      ...設定.headers,
+  // multipart のときは Content-Type を付けない．境界文字列は fetch が決める．
+  const 見出し: 記録<文字列, 文字列> = {
+    Authorization: `Bot ${環境.DISCORD_BOT_TOKEN}`,
+    ...((設定.headers ?? {}) as 記録<文字列, 文字列>),
+  };
+
+  もし(設定.body instanceof FormData, {
+    であれば: () => 未定義,
+    でなければ: () => {
+      見出し["Content-Type"] = "application/json";
     },
-  }).んで((応答) =>
+  });
+
+  return fetch(`${基点}${経路}`, { ...設定, headers: 見出し }).んで((応答) =>
     もし(応答.ok, {
       であれば: () => すぐ返す(応答),
       でなければ: () =>
@@ -130,8 +229,14 @@ interface 生の発言 {
   author: 生の発言者;
   member?: 省略可<{ nick?: 省略可<文字列 | 空> }>;
   attachments?: 省略可<読み取り専用配列<生の添付>>;
-  /** 返信のときだけ入る． */
+  /** 返信のとき，どの発言への返信か． */
   message_reference?: 省略可<{ message_id?: 省略可<文字列> } | 空>;
+}
+
+/** 発言を辿る の途中経過． */
+interface 辿りの途中 {
+  一覧: 配列<発言>;
+  次のid: 省略可<文字列>;
 }
 
 /** ニックネーム > 表示名 > ユーザー名．Discord が実際に見せている順． */
@@ -148,7 +253,7 @@ function 発言に直す(生: 生の発言): 発言 {
     発言者名: 表示名(生.author, 生.member?.nick),
     bot発言か: 真偽(生.author.bot),
     添付一覧: 添付に直す(生.attachments),
-    返信先id: 生.message_reference?.message_id,
+    返信先id: 生.message_reference?.message_id ?? 未定義,
   };
 }
 

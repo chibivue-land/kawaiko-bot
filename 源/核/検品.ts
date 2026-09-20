@@ -10,8 +10,10 @@
  *
  * 問いの文面と閾値は隣の 検品-問い.json にある．純粋．
  */
-import { 末尾の行, 状態を書く, 真の確率, 閾値を超えるか, type 問い, type 答え一覧 } from "./判定";
 import 定義 from "./検品-問い.json";
+
+import { 末尾の行, 状態を書く, 真の確率, 閾値を超えるか, type 問い, type 答え一覧 } from "./判定";
+
 import { 文字列, 真, 真偽 } from "../共通/型";
 import type { 省略可, 記録 } from "../共通/型";
 

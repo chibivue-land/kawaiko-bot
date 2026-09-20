@@ -1,13 +1,17 @@
 import { DurableObject } from "cloudflare:workers";
-import type { 仕事の種類, 提供者の休み } from "../../振る舞い/接続口";
-import { 現在時刻 } from "../../核/時刻";
+
 import { 月キー } from "../AI/料金";
+
+import type { 仕事の種類, 提供者の休み } from "../../振る舞い/接続口";
+
+import { 現在時刻 } from "../../核/時刻";
 import { ISO時刻 } from "../../核/時刻";
+
+import { 各要素に } from "../../共通/反復";
 import { 数値, 文字列, 未定義, 真偽 } from "../../共通/型";
 import type { 一部, 無, 省略可, 約束, 記録 } from "../../共通/型";
-import { より大きい, より小さい, 足す } from "../../共通/演算";
 import { もし } from "../../共通/構文";
-import { 各要素に } from "../../共通/反復";
+import { より大きい, より小さい, 足す } from "../../共通/演算";
 import { 揃える } from "../../共通/約束";
 
 export interface 仕事の記録 {

@@ -10,6 +10,9 @@
  */
 import { 数値, 文字列, 真偽 } from "../共通/型";
 import type { 省略可, 読み取り専用配列 } from "../共通/型";
+import { 改行 } from "../共通/文字";
+import { もし, 場合分け } from "../共通/構文";
+import { より小さい, 以下, 割る, 等しい } from "../共通/演算";
 import {
   いずれか,
   写す,
@@ -24,9 +27,6 @@ import {
   繋ぐ,
   長さ,
 } from "../共通/関数";
-import { より小さい, 以下, 割る, 等しい } from "../共通/演算";
-import { もし, 場合分け } from "../共通/構文";
-import { 改行 } from "../共通/文字";
 
 export interface 添付 {
   名前: 文字列;

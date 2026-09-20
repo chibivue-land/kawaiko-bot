@@ -8,13 +8,15 @@
  */
 import { 判定を仰ぐ } from "./判定";
 import type { 部品一式 } from "./接続口";
+
 import { Jevの答えを言う, Jev命令の中身を読む } from "../核/Jev命令";
+
 import { 文字列, 未定義, 真 } from "../共通/型";
 import type { 不明, 約束 } from "../共通/型";
-import { 前後の空白を落とす, 空か } from "../共通/関数";
-import { 等しい } from "../共通/演算";
 import { もし } from "../共通/構文";
+import { 等しい } from "../共通/演算";
 import { すぐ返す } from "../共通/約束";
+import { 前後の空白を落とす, 空か } from "../共通/関数";
 
 export interface Jevへの問い合わせ {
   /** jev 命令の中身．«この文は煽りか» / «晩飯 [麺|米]» / «ヤバさ [低<中<高]»． */

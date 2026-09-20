@@ -1,4 +1,4 @@
-import { 仕様, 検証, 期待 } from "../試験/言葉";
+import type { 答え一覧 } from "./判定";
 import {
   一度に学ぶ事実の数,
   事実を読み取る,
@@ -9,8 +9,10 @@ import {
   門番の状態,
   門番を通るか,
 } from "./学習";
-import type { 答え一覧 } from "./判定";
 import type { 観測 } from "./記憶";
+
+import { 仕様, 検証, 期待 } from "../試験/言葉";
+
 import { 偽, 未定義, 真 } from "../共通/型";
 
 function 観測を作る(連番: number, 発言者id: string, 発言者名: string, 本文: string): 観測 {

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, sqliteView, text } from "drizzle-orm/sqlite-core";
+
 import { 真 } from "../../共通/型";
 
 /**
