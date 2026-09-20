@@ -1,8 +1,9 @@
 import { Gemini提供者 } from "./AI/Gemini";
+import { Jevの判定器, 判定なし } from "./AI/Jev";
 import { WorkersAI提供者 } from "./AI/WorkersAI";
 import { WorkersAIの絵描き } from "./AI/絵";
 import { WorkersAIの道案内 } from "./AI/道案内";
-import { モデル一覧を読む, 順に試す発話器 } from "./AI/選択";
+import { モデル一覧を読む, 既定の熟考のモデル一覧, 順に試す発話器 } from "./AI/選択";
 import { D1の記憶庫, 記憶なし } from "./D1/記憶庫";
 import { Discordのチャット } from "./Discord/通信";
 import { webの添付読み } from "./添付";
@@ -16,7 +17,7 @@ import type { チャンネル記録, 予算番, 利用制限, 提供者の記録
 import { 現在時刻 } from "../核/時刻";
 
 import { 数値, 数学, 未定義 } from "../共通/型";
-import { 等しくない } from "../共通/演算";
+import { 等しい, 等しくない } from "../共通/演算";
 import { 約束に均す } from "../共通/約束";
 
 /**
@@ -83,7 +84,13 @@ export function 部品を組み立てる(環境: 環境): 部品一式 {
       [WorkersAI提供者(環境.推論), Gemini提供者(環境.GEMINI_API_KEY)],
       モデル一覧を読む(環境.モデル一覧),
       提供者の記録,
+      モデル一覧を読む(環境.熟考のモデル一覧, 既定の熟考のモデル一覧),
     ),
+
+    // 判定器は発話の提供者と同じ帳面で休む．"none" なら置かない．
+    判定器: 等しい(環境.判定のモデル, "none")
+      ? 判定なし
+      : Jevの判定器(環境.推論, { モデル: 環境.判定のモデル || 未定義, 記録係: 提供者の記録 }),
 
     記憶庫: 環境.記憶のD1 ? D1の記憶庫(環境.記憶のD1) : 記憶なし,
 
@@ -104,6 +111,7 @@ export function 部品を組み立てる(環境: 環境): 部品一式 {
 
     独言の確率: 環境.独言の確率,
     横槍の確率: 環境.横槍の確率,
+    乱心の確率: 環境.乱心の確率 ?? "0",
     観測するか: 等しくない(環境.観測するか, "false"),
 
     現在時刻,

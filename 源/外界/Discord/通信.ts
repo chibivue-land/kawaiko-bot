@@ -253,6 +253,7 @@ function 発言に直す(生: 生の発言): 発言 {
     発言者名: 表示名(生.author, 生.member?.nick),
     bot発言か: 真偽(生.author.bot),
     添付一覧: 添付に直す(生.attachments),
+    返信先id: 生.message_reference?.message_id ?? 未定義,
   };
 }
 
