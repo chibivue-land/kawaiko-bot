@@ -57,7 +57,12 @@ export default defineConfig(({ mode }) => ({
         command: "vp build",
         input: 読んだもの,
         // キャッシュから戻すのはここ．戻したものは実ビルドと 1 バイトも違わない．
-        output: ["成果物/**"],
+        //
+        // .wrangler/deploy/config.json は Cloudflare プラグインが 成果物 の外に書く
+        // 転送設定で，wrangler に「成果物/ の方の wrangler.json を見ろ」と教える．
+        // これが戻らないと，再生の回の `wrangler deploy` は生の 源/入口.ts を自前で
+        // 束ねようとして `.md?raw` で落ちる (実際にデプロイが 2 回続けてそう落ちた)．
+        output: ["成果物/**", ".wrangler/deploy/config.json"],
       },
 
       // 外へ出す 2 つは副作用があるので，結果を使い回さない．
