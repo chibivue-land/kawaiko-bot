@@ -34,6 +34,24 @@ function 推論を作る() {
     期待(提供者.画像を見られるか("@cf/zai-org/glm-4.7-flash")).である(偽);
   });
 
+  検証("普段の先頭のモデル (gemma-4) にも目がある", () => {
+    // ここに載せ忘れていたあいだ，本番で目があるのは Gemini だけだった．
+    // それが転んだ回は，画像の話に画像抜きで答えていた．
+    const { 呼ばれた, ai } = 推論を作る();
+    const 提供者 = WorkersAI提供者(ai);
+
+    期待(提供者.画像を見られるか("@cf/google/gemma-4-26b-a4b-it")).である(真);
+
+    return 提供者
+      .実行する("@cf/google/gemma-4-26b-a4b-it", { ...依頼, 画像一覧: [図] })
+      .んで(() => {
+        期待((呼ばれた[0]!.messages as 配列<{ content: 不明 }>)[1]!.content).と等しい([
+          { type: "text", text: "これ何" },
+          { type: "image_url", image_url: { url: "data:image/png;base64,44GC" } },
+        ]);
+      });
+  });
+
   検証("目のあるモデルには，指示文と画像を OpenAI と同じ形で渡す", () => {
     const { 呼ばれた, ai } = 推論を作る();
 

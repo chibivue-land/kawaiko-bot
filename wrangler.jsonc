@@ -20,7 +20,9 @@
     // モデルの優先順 (コンマ区切り)．"@cf/..." は Workers AI (API キー不要，
     // 1 日ぶんの無料枠)，"gemini-..." は Gemini API．どんな理由で失敗しても
     // 次の項目へ手渡す (源/外界/AI/選択.ts)．
-    "モデル一覧": "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,gemini-3.5-flash-lite",
+    // 目があるのは gemma-4 / qwen3.8 / Gemini (源/外界/AI/WorkersAI.ts)．画像が添えられた
+    // 回だけ，その 3 つが前に出る．qwen は普段は glm より後ろ — 雑談に 27B は要らない．
+    "モデル一覧": "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,@cf/qwen/qwen3.8-27b,gemini-3.5-flash-lite",
     // 独言の枠が実際に投稿する確率 (0.0-1.0)．
     "独言の確率": "0.75",
     // 横槍の枠が実際に絡む確率 (0.0-1.0)．
