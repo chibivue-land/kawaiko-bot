@@ -101,7 +101,7 @@ export const いずれか = 呼ぶ.bind(Array.prototype.some) as <要素>(
 
 export const 探す = 呼ぶ.bind(Array.prototype.find) as <要素>(
   一覧: 読み取り専用配列<要素>,
-  判定: (要素: 要素, 添字: 数値) => 不明,
+  判定: (要素: 要素) => 不明,
 ) => 省略可<要素>;
 
 export const 一覧に含む = 呼ぶ.bind(Array.prototype.includes) as <要素>(
