@@ -21,6 +21,14 @@ export const 切り出す = 呼ぶ.bind(String.prototype.slice) as (
 
 export const 前後の空白を落とす = 呼ぶ.bind(String.prototype.trim) as (文: 文字列) => 文字列;
 
+/**
+ * 片割れだけ残った代用符号 (サロゲート) を U+FFFD に置き換える．
+ *
+ * `切り出す` は UTF-16 の単位で切るので，絵文字の真ん中に当たると片割れが残る．
+ * JSON.stringify はそれを `\ud83d` と書き出し，厳密な相手はその本文ごと断る．
+ */
+export const 整った形にする = 呼ぶ.bind(String.prototype.toWellFormed) as (文: 文字列) => 文字列;
+
 export const 置き換える = 呼ぶ.bind(String.prototype.replace) as (
   文: 文字列,
   対象: 文字列 | RegExp,
