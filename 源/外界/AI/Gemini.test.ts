@@ -1,4 +1,4 @@
-import { Gemini提供者 } from "./Gemini";
+import { Gemini提供者, 思考の段 } from "./Gemini";
 
 import { 仕様, 検証, 期待 } from "../../試験/言葉";
 
@@ -15,5 +15,19 @@ import { 偽, 真 } from "../../共通/型";
 
   検証("Workers AI の Gemma は受け持たない", () => {
     期待(Gemini提供者("かぎ").受け持つか("@cf/google/gemma-4-26b-a4b-it")).である(偽);
+  });
+});
+
+仕様("思考の段", () => {
+  検証("Gemma には minimal か high しか渡さない", () => {
+    // low を渡すと 400 で断られる．
+    期待(思考の段("gemma-4-31b-it", "low")).である("minimal");
+    期待(思考の段("gemma-4-31b-it", "medium")).である("high");
+    期待(思考の段("gemma-4-26b-a4b-it", "high")).である("high");
+  });
+
+  検証("Gemini には頼まれた深さをそのまま渡す", () => {
+    期待(思考の段("gemini-3.8-flash", "low")).である("low");
+    期待(思考の段("gemini-3.5-flash-lite", "medium")).である("medium");
   });
 });

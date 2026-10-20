@@ -3,14 +3,15 @@
  * ツール (グラウンディング) でブラウジングさせる．
  *
  * 同じ口で Gemma 4 も受け持つ．AI Studio のキーなら無料で，枠は Gemini のモデルとは
- * 別に数えられる．ただし検索のツールは Gemini のもの — Gemma には渡さない．
+ * 別に数えられる．検索のツールは Gemma には渡さない — この口越しに受けてくれるかを
+ * 確かめておらず，断られるとそのモデルが 30 分休みに入るので．
  */
 import { GoogleGenAI } from "@google/genai";
 
 import type { モデル提供者 } from "./提供者";
 import { 概算費用ドル } from "./料金";
 
-import type { 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
+import type { 思考の深さ, 発話の依頼, 発話の結果 } from "../../振る舞い/接続口";
 
 import { 取り次ぐ } from "../../共通/取り次ぎ";
 import { 偽, 文字列, 未定義, 真 } from "../../共通/型";
@@ -68,7 +69,7 @@ export function Gemini提供者(apiキー: 文字列): モデル提供者 {
             依頼.検索を許す && モデル.startsWith("gemini-") ? [{ type: "google_search" }] : 未定義,
           generation_config: {
             max_output_tokens: 依頼.最大トークン ?? 2048,
-            thinking_level: 依頼.深さ ?? "low",
+            thinking_level: 思考の段(モデル, 依頼.深さ ?? "low"),
           },
           // Google 側にやりとりを残す必要は無い．
           store: 偽,
@@ -87,4 +88,18 @@ export function Gemini提供者(apiキー: 文字列): モデル提供者 {
         });
     },
   };
+}
+
+/**
+ * 相手に渡す思考の段．
+ *
+ * Gemma 4 の段は「切る (minimal)」と「入れる (high)」の 2 つしか無く，low を渡すと
+ * 400 で断られる．点呼で両方の Gemma が 400 を返して分かった (2026-10-20)．
+ * 浅くてよい回は切り，それより深く頼まれた回は入れる．
+ */
+export function 思考の段(モデル: 文字列, 深さ: 思考の深さ): 文字列 {
+  return もし(モデル.startsWith("gemma-"), {
+    であれば: () => (等しい(深さ, "low") ? "minimal" : "high"),
+    でなければ: () => 深さ,
+  });
 }

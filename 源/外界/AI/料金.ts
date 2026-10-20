@@ -48,7 +48,6 @@ const 料金表: Array<[接頭辞: 文字列, 単価: 単価]> = [
   ["gemini-3.5-flash", { 入力: 1.5, 出力: 9 }],
   ["gemini-3.1-flash-lite", { 入力: 0.25, 出力: 1.5 }],
   ["gemini-3-flash-preview", { 入力: 0.5, 出力: 3 }],
-  ["gemini-2.5-pro", { 入力: 1.25, 出力: 10 }],
   ["gemini-2.5-flash-lite", { 入力: 0.1, 出力: 0.4 }],
   ["gemini-2.5-flash", { 入力: 0.3, 出力: 2.5 }],
   // Gemma は Gemini API に有料の枠が無い．無料でしか使えない．
