@@ -51,7 +51,8 @@ jobs:
             "https://kawaiko-bot.ubuge1122.workers.dev/$KUCHI" \
             > kotae.json
           if [ "$KUCHI" = models ]; then
-            jq -c '.[] | {モデル, 答えたか, ミリ秒, 文字数, 番号: ((.異常 // "") | [scan("[0-9]{3,4}")] | first)}' kotae.json
+            # jq は ASCII でない鍵を略記で書けないので，括弧で引く。
+            jq -c '.[] | {"モデル": .["モデル"], "答えたか": .["答えたか"], "ミリ秒": .["ミリ秒"], "文字数": .["文字数"], "番号": ((.["異常"] // "") | [scan("[0-9]{3,4}")] | first)}' kotae.json
           else
             jq . kotae.json
           fi
