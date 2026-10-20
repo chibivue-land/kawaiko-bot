@@ -309,11 +309,14 @@ export function 見えるなりの依頼(
  * 無料枠に載っているが，前から使っていたアカウントにしか開いておらず，このキーでは
  * 404 が返る (2026-10-20 の点呼)．
  *
+ * Gemini 側は点呼で測った速さの順．3.8 Flash と Gemma 4 31B は賢いが，1 言に 30〜50 秒
+ * 掛かったので後ろへ回してある．
+ *
  * 視覚モデルは安いものより後ろに置いてある．普段の雑談に 27B は要らない．
  * 画像が添えられている回だけ，試す順に並べる が前へ出す．
  */
 export const 既定のモデル一覧 =
-  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,@cf/qwen/qwen3.8-27b,@cf/openai/gpt-oss-120b,@cf/qwen/qwen3-30b-a3b-fp8,@cf/meta/llama-4-scout-17b-16e-instruct,@cf/mistralai/mistral-small-3.1-24b-instruct,@cf/nvidia/nemotron-3-120b-a12b,@cf/meta/llama-3.3-70b-instruct-fp8-fast,@cf/aisingapore/gemma-sea-lion-v4-27b-it,@cf/openai/gpt-oss-20b,gemini-3.5-flash-lite,gemini-3.8-flash,gemini-3.6-flash,gemini-3.1-flash-lite,gemini-3-flash-preview,gemma-4-31b-it,gemma-4-26b-a4b-it";
+  "@cf/google/gemma-4-26b-a4b-it,@cf/zai-org/glm-4.7-flash,@cf/qwen/qwen3.8-27b,@cf/openai/gpt-oss-120b,@cf/qwen/qwen3-30b-a3b-fp8,@cf/meta/llama-4-scout-17b-16e-instruct,@cf/mistralai/mistral-small-3.1-24b-instruct,@cf/nvidia/nemotron-3-120b-a12b,@cf/meta/llama-3.3-70b-instruct-fp8-fast,@cf/aisingapore/gemma-sea-lion-v4-27b-it,@cf/openai/gpt-oss-20b,gemini-3.5-flash-lite,gemini-3-flash-preview,gemini-3.6-flash,gemini-3.1-flash-lite,gemma-4-26b-a4b-it,gemini-3.8-flash,gemma-4-31b-it";
 
 export function モデル一覧を読む(設定: 文字列 | 未定義): 配列<文字列> {
   return 絞る(
