@@ -98,6 +98,18 @@ function 推論を作る() {
       });
   });
 
+  検証("出力の上限は max_completion_tokens と max_tokens の両方に入れる", () => {
+    // gpt-oss や古いモデルは max_tokens しか見ず，見ないと既定の 256 で返事が切れる．
+    const { 呼ばれた, ai } = 推論を作る();
+
+    return WorkersAI提供者(ai)
+      .実行する("@cf/openai/gpt-oss-120b", { ...依頼, 最大トークン: 300 })
+      .んで(() => {
+        期待(呼ばれた[0]!.max_completion_tokens).である(300);
+        期待(呼ばれた[0]!.max_tokens).である(300);
+      });
+  });
+
   検証("漏れた思考ブロックは落とす", () => {
     const 走らせる = 偽装する(async () => ({ response: "<think>ぐぬぬ</think>  ふーん" }));
 

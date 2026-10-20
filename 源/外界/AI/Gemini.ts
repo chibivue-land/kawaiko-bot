@@ -1,6 +1,9 @@
 /**
  * Gemini Interactions API．呼び出し側が求めたときだけ，組み込みの google_search
  * ツール (グラウンディング) でブラウジングさせる．
+ *
+ * 同じ口で Gemma 4 も受け持つ．AI Studio のキーなら無料で，枠は Gemini のモデルとは
+ * 別に数えられる．ただし検索のツールは Gemini のもの — Gemma には渡さない．
  */
 import { GoogleGenAI } from "@google/genai";
 
@@ -53,7 +56,7 @@ export function Gemini提供者(apiキー: 文字列): モデル提供者 {
   const 客体 = 取り次ぐ(new GoogleGenAI({ apiKey: apiキー }));
   return {
     名前: "gemini",
-    受け持つか: (モデル) => モデル.startsWith("gemini-"),
+    受け持つか: (モデル) => モデル.startsWith("gemini-") || モデル.startsWith("gemma-"),
     画像を見られるか: () => 真,
     実行する(モデル: 文字列, 依頼: 発話の依頼): 約束<発話の結果> {
       return 客体.interactions
@@ -61,7 +64,8 @@ export function Gemini提供者(apiキー: 文字列): モデル提供者 {
           model: モデル,
           input: 入力を組み立てる(依頼),
           system_instruction: 依頼.指示書,
-          tools: 依頼.検索を許す ? [{ type: "google_search" }] : 未定義,
+          tools:
+            依頼.検索を許す && モデル.startsWith("gemini-") ? [{ type: "google_search" }] : 未定義,
           generation_config: {
             max_output_tokens: 依頼.最大トークン ?? 2048,
             thinking_level: 依頼.深さ ?? "low",

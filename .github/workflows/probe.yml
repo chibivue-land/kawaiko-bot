@@ -3,10 +3,14 @@
 # TRIGGER_TOKEN は GitHub Secrets にしか無いので、手元にトークンが無くても
 # 中身を見られるようにここから叩く。
 #
-#   ask   道案内が何と言い、何を引き、どこを開いたか
-#   draw  絵の下ごしらえ (描くが投稿はしない)
+#   ask     道案内が何と言い、何を引き、どこを開いたか
+#   draw    絵の下ごしらえ (描くが投稿はしない)
+#   models  並べたモデルの点呼 (どれが本当に答えるか)
 #
-# どちらも Discord へは出さないので、何度流しても静か。
+# どれも Discord へは出さないので、何度流しても静か。
+#
+# models の口は提供者が返した異常の文面も返すが、ここでは番号 (429 や 5007) だけを
+# 残して文面は捨てる。文面は公開ログに流すものではないので。
 #
 # 覗き先は選択肢に挙げたものだけに留めること。このリポジトリは公開で、Actions の
 # ログも公開される。/memory や /status は実在の人物についての観測や運用の中身を
@@ -25,6 +29,7 @@ on:
         options:
           - ask
           - draw
+          - models
       q:
         description: "お題 / 問いかけ"
         required: true
@@ -44,7 +49,12 @@ jobs:
             --data-urlencode "q=$Q" \
             -H "Authorization: Bearer $TRIGGER_TOKEN" \
             "https://kawaiko-bot.ubuge1122.workers.dev/$KUCHI" \
-            | jq .
+            > kotae.json
+          if [ "$KUCHI" = models ]; then
+            jq -c '.[] | {モデル, 答えたか, ミリ秒, 文字数, 番号: ((.異常 // "") | [scan("[0-9]{3,4}")] | first)}' kotae.json
+          else
+            jq . kotae.json
+          fi
         env:
           TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
           Q: ${{ inputs.q }}

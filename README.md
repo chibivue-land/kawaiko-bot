@@ -33,7 +33,7 @@ ubugeeei の過去の発言をもとにした人格 **kawaiko** が chibivue lan
 | ---------- | ------------------------------------------------------------------------------------------------ |
 | 実行基盤   | Cloudflare Workers ([wrangler.jsonc](wrangler.jsonc))                                            |
 | ツール     | Vite+ (`vp`) + @cloudflare/vite-plugin．TypeScript 7，pnpm 11 catalog                            |
-| AI         | `KAWAIKO_MODEL` の優先順で試す．Workers AI (無料枠) → Gemini．どこで失敗しても次へ渡す           |
+| AI         | `モデル一覧` の優先順で試す．Workers AI → Gemini API．どちらも無料枠だけ．失敗したら次へ渡す     |
 | メンション | Durable Object が Discord Gateway に WebSocket 常駐．cron と alarm が番犬                        |
 | 定期投稿   | Cron Triggers．毎時のディスパッチャが日本時間で担当を振り分ける ([源/核/予定.ts](源/核/予定.ts)) |
 | 長期記憶   | D1 + Drizzle ORM ([移行/](移行) / [源/外界/D1](源/外界/D1))．サーバー単位の追記専用ログ          |
@@ -153,9 +153,24 @@ kawaiko に会話 DB は無く，**チャンネルの直近ログそのものが
 
 貼られた画像は、目のあるモデルへそのまま渡る。画像が添えられている回**だけ**、見られる提供者が順番の前に出る ([源/外界/AI/選択.ts](源/外界/AI/選択.ts))。普段の順番は変えない — 先頭は無料枠のモデルなので、常時並べ替えるとその枠を捨てることになる。
 
-目があるのは、普段の先頭の [gemma-4-26b-a4b-it](https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/)、[qwen3.8-27b](https://developers.cloudflare.com/workers-ai/models/qwen3.8-27b/) (2026-08-17 に Workers AI へ来たもの)、それに Gemini。目の無いモデルまで落ちてきた回は、画像を外して「今回は見えていない」と指示文に書き足す ([源/核/指示文-見えない画像.md](源/核/指示文-見えない画像.md)) — 見えたふりで語らせないため。
+目があるのは、普段の先頭の [gemma-4-26b-a4b-it](https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/)、[qwen3.8-27b](https://developers.cloudflare.com/workers-ai/models/qwen3.8-27b/) (2026-08-17 に Workers AI へ来たもの)、llama-4-scout、mistral-small-3.1、それに Gemini API のモデル全部 (Gemma 4 を含む)。目の無いモデルまで落ちてきた回は、画像を外して「今回は見えていない」と指示文に書き足す ([源/核/指示文-見えない画像.md](源/核/指示文-見えない画像.md)) — 見えたふりで語らせないため。
 
 画像やファイルが添えられている回は、本文から web 検索をしない。検索語を決める側には添付が見えていないので、「この画像を解説して」からは無関係な頁しか引けない。貼られた URL は、添付があっても読む。
+
+### 並べるモデル
+
+無料で使えるものを全部並べてある ([wrangler.jsonc](wrangler.jsonc) の `モデル一覧`)。入れていないのは、有料の契約が要るもの (Workers AI の kimi・glm-5・deepseek-v4、Gemini の Pro と 4) と、人格を演じきれない小さいモデル・思考を切れないモデル。
+
+- **Workers AI** は全モデルで 1 日 10,000 neuron を分け合う。並べても枠は増えないが、あるモデルだけが転んだ (混んでいる・消えた) 回の逃げ道になる
+- **Gemini API** (Gemma 4 を含む) は枠がモデルごとに別。並べたぶんだけ 1 日に答えられる数が増える
+
+だから失敗したときに休ませるのも**モデルごと** ([源/外界/AI/選択.ts](源/外界/AI/選択.ts))。提供者ごとに休ませると、1 つ尽きただけで残りの Gemini の枠まで捨てることになる。
+
+足したモデルが本当に答えるかは点呼で見る。返事の連鎖は失敗を黙って次へ渡すので、使えないモデルが混ざっていても外からは見えない:
+
+```bash
+gh workflow run probe.yml -f kind=models
+```
 
 ### 長期記憶 (D1)
 
@@ -183,8 +198,9 @@ curl -XPOST -H "Authorization: Bearer $TRIGGER_TOKEN" "https://kawaiko-bot.<subd
 | ---------------------- | -------------- | ------------------------------------------------------- |
 | `GET /`                | 不要           | 生存確認．ついでにゲートウェイ接続を蹴る                |
 | `GET /status`          | 不要           | 繋がっているかと，いつ繋がったか **だけ**               |
-| `GET /status`          | 要             | 診断のすべて (支出・休んでいる提供者・直前の異常の文面) |
+| `GET /status`          | 要             | 診断のすべて (支出・休んでいるモデル・直前の異常の文面) |
 | `GET /research?q=`     | 要             | ある問いかけに調査係が何を返すか                        |
+| `GET /models`          | 要             | 並べたモデルの点呼．1 つずつ叩いて答えたかを返す        |
 | `GET                   | POST /memory…` | 要                                                      | 学んだことを読む / 取り消す |
 | `POST /trigger/<名前>` | 要             | 手で独言・横槍・学習を動かす                            |
 

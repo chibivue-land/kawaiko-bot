@@ -31,9 +31,13 @@ export function WorkersAI提供者(ai: Ai): モデル提供者 {
           { role: "system", content: 依頼.指示書 },
           { role: "user", content: 本文を組み立てる(モデル, 依頼) },
         ],
+        // 新しいモデルは max_completion_tokens を，古いモデルや gpt-oss は max_tokens を
+        // 見る．見ない側は黙って既定値 (256 のものもある) に倒れ，長めの返事が途中で
+        // 切れるので，両方に同じ値を入れる．
         max_completion_tokens: 依頼.最大トークン ?? 1024,
-        // GLM 系は chat_template_kwargs の enable_thinking を見る．それ以外は
-        // reasoning_effort (呼び出し側の「深さ」に対応) を見る．
+        max_tokens: 依頼.最大トークン ?? 1024,
+        // GLM・Qwen3・Nemotron は chat_template_kwargs の enable_thinking を見る．
+        // それ以外は reasoning_effort (呼び出し側の「深さ」に対応) を見る．
         reasoning_effort: 依頼.深さ ?? "low",
         chat_template_kwargs: { enable_thinking: 偽 },
       }).んで((応答) => {

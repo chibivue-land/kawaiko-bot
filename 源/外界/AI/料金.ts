@@ -31,12 +31,28 @@ const 料金表: Array<[接頭辞: 文字列, 単価: 単価]> = [
   ["@cf/google/gemma-4-26b-a4b-it", { 入力: 0.1, 出力: 0.3 }],
   ["@cf/zai-org/glm-4.7-flash", { 入力: 0.06, 出力: 0.4 }],
   ["@cf/qwen/qwen3.8-27b", { 入力: 0.45, 出力: 3.2 }],
+  ["@cf/qwen/qwen3-30b-a3b-fp8", { 入力: 0.051, 出力: 0.335 }],
+  ["@cf/openai/gpt-oss-120b", { 入力: 0.35, 出力: 0.75 }],
+  ["@cf/openai/gpt-oss-20b", { 入力: 0.2, 出力: 0.3 }],
+  ["@cf/meta/llama-4-scout-17b-16e-instruct", { 入力: 0.27, 出力: 0.85 }],
+  ["@cf/mistralai/mistral-small-3.1-24b-instruct", { 入力: 0.351, 出力: 0.555 }],
+  ["@cf/nvidia/nemotron-3-120b-a12b", { 入力: 0.5, 出力: 1.5 }],
+  ["@cf/meta/llama-3.3-70b-instruct-fp8-fast", { 入力: 0.293, 出力: 2.253 }],
+  ["@cf/aisingapore/gemma-sea-lion-v4-27b-it", { 入力: 0.351, 出力: 0.555 }],
   ["@cf/", { 入力: 0.3, 出力: 2.5 }],
+  // 3.8 / 3.6 Flash は 2027-01-01 から倍になる．
+  ["gemini-3.8-flash", { 入力: 0.75, 出力: 3.75 }],
   ["gemini-3.7-flash", { 入力: 0.75, 出力: 3.75 }],
-  ["gemini-3.5-flash-lite", { 入力: 0.1, 出力: 0.4 }],
+  ["gemini-3.6-flash", { 入力: 0.75, 出力: 3.75 }],
+  ["gemini-3.5-flash-lite", { 入力: 0.3, 出力: 2.5 }],
   ["gemini-3.5-flash", { 入力: 1.5, 出力: 9 }],
+  ["gemini-3.1-flash-lite", { 入力: 0.25, 出力: 1.5 }],
+  ["gemini-3-flash-preview", { 入力: 0.5, 出力: 3 }],
+  ["gemini-2.5-pro", { 入力: 1.25, 出力: 10 }],
   ["gemini-2.5-flash-lite", { 入力: 0.1, 出力: 0.4 }],
   ["gemini-2.5-flash", { 入力: 0.3, 出力: 2.5 }],
+  // Gemma は Gemini API に有料の枠が無い．無料でしか使えない．
+  ["gemma-", { 入力: 0, 出力: 0 }],
 ];
 
 /**
