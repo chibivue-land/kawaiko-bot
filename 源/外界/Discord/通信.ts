@@ -145,6 +145,20 @@ export function Discordのチャット(環境: 環境): チャット {
       });
     },
 
+    チャンネル名を引く(チャンネルid): 約束<省略可<文字列>> {
+      return 試みる<省略可<文字列>>({
+        実行: () =>
+          呼ぶ(環境, `/channels/${チャンネルid}`, { method: "GET" })
+            .んで((応答) => 応答.json())
+            .んで((中身) => (中身 as { name?: 省略可<文字列 | 空> }).name ?? 未定義),
+        しくじったら: (躓き) => {
+          注意("Discord: チャンネルの名前を引けなかった:", 文字列(躓き));
+
+          return 未定義;
+        },
+      });
+    },
+
     /**
      * 処理のあいだ「kawaiko が入力中…」を出し続ける．
      * 表示の失敗は握り潰す．返事のほうが大事なので．
@@ -231,6 +245,9 @@ interface 生の発言 {
   attachments?: 省略可<読み取り専用配列<生の添付>>;
   /** 返信のとき，どの発言への返信か． */
   message_reference?: 省略可<{ message_id?: 省略可<文字列> } | 空>;
+  /** 返信のとき，返信先の発言そのもの．消えていれば null． */
+  referenced_message?: 省略可<{ author?: 省略可<{ id: 文字列 }> } | 空>;
+  mentions?: 省略可<読み取り専用配列<{ id: 文字列 }>>;
 }
 
 /** 発言を辿る の途中経過． */
@@ -253,6 +270,9 @@ function 発言に直す(生: 生の発言): 発言 {
     発言者名: 表示名(生.author, 生.member?.nick),
     bot発言か: 真偽(生.author.bot),
     添付一覧: 添付に直す(生.attachments),
+    返信先id: 生.message_reference?.message_id ?? 未定義,
+    返信先の発言者id: 生.referenced_message?.author?.id,
+    言及されたid一覧: 写す(生.mentions ?? [], (言及) => 言及.id),
   };
 }
 
